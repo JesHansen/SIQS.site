@@ -531,12 +531,12 @@
       <table>
         <thead><tr><th>Stage</th><th>What happened</th></tr></thead>
         <tbody>
-          <tr><td>Multiplier</td><td>\(k = 13\) selected; all later phases work on \(\widetilde N = 13N\).</td></tr>
-          <tr><td>Factor base</td><td>Bound 4291 → <strong>293</strong> primes with stored roots and logs.</td></tr>
-          <tr><td>Sieving</td><td><strong>426</strong> full relations and <strong>2110</strong> single-large-prime partials collected across the polynomial families.</td></tr>
-          <tr><td>Filtering</td><td>Partial pairing yields <strong>441</strong> combined relations; after singleton pruning and trimming, a <strong>272 × 256</strong> sparse matrix remains.</td></tr>
-          <tr><td>Linear algebra</td><td>Block Lanczos emits <strong>63</strong> dependencies.</td></tr>
-          <tr><td>Square root</td><td>Dependency 0, combining 130 relations, already succeeds.</td></tr>
+          <tr><td>Multiplier</td><td>\(k = 3\) selected; all later phases work on \(\widetilde N = 3N\).</td></tr>
+          <tr><td>Factor base</td><td>Bound 4291 → <strong>302</strong> primes with stored roots and logs.</td></tr>
+          <tr><td>Sieving</td><td><strong>708</strong> full relations and <strong>2555</strong> single-large-prime partials collected from <strong>16</strong> polynomials.</td></tr>
+          <tr><td>Filtering</td><td>Partial pairing yields <strong>760</strong> combined relations; after singleton pruning and trimming, a <strong>283 × 267</strong> sparse matrix remains (from an initial 1468 × 303).</td></tr>
+          <tr><td>Linear algebra</td><td>Block Lanczos finds <strong>264</strong> pivots and emits <strong>63</strong> dependencies.</td></tr>
+          <tr><td>Square root</td><td>2 dependencies attempted; the successful one combines 143 relations.</td></tr>
         </tbody>
       </table>
     </div>
@@ -546,7 +546,7 @@
        \gcd(X+Y,\,N) = 123{,}456{,}789{,}012{,}419, $$
     <p>
       and indeed \(123456789012419 \times 678901234567937 = N\). Note the shape of the economics
-      even at this toy scale: 2110 near-misses were collected almost free and condensed into 441
+      even at this toy scale: 2555 near-misses were collected almost free and condensed into 760
       extra matrix rows — the large-prime variation more than doubled the effective yield of the
       sieve.
     </p>
