@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SIQS.NET — a quadratic sieve workbench</title>
+  <meta name="description" content="SIQS.NET is an open-source implementation of the self-initializing quadratic sieve in modern C# and .NET — a factorization workbench and an explorable implementation of a classic integer-factorization algorithm." />
+
+  <!-- Open Graph / social -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="SIQS.NET — a quadratic sieve workbench" />
+  <meta property="og:description" content="An open-source self-initializing quadratic sieve in modern C# and .NET. Factor numbers. Understand how." />
+  <meta property="og:url" content="https://siqs.net/" />
+  <meta name="twitter:card" content="summary" />
+
+  <link rel="canonical" href="https://siqs.net/" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='monospace'>&#8730;</text></svg>" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header class="site">
+    <div class="wrap nav">
+      <div class="brand"><span class="mark">√</span> SIQS<span style="color:var(--text-dim)">.NET</span></div>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#repo">Repository</a>
+        <a href="#start">Get started</a>
+        <a class="ghlink" href="https://github.com/JesHansen/siqs.net">GitHub&nbsp;&rarr;</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- ---------- Hero ---------- -->
+    <div class="hero wrap">
+      <div class="eyebrow">Self-Initializing Quadratic Sieve · C# / .NET 10</div>
+      <h1>Factor numbers.<br />Understand how.</h1>
+      <p class="tagline">An open-source implementation of a classic integer-factorization algorithm.</p>
+      <p class="lede">
+        SIQS.NET is both a factorization workbench and an <em>explorable</em> implementation of the
+        self-initializing quadratic sieve. Use it from the command line, drive it through a Blazor
+        web UI, or distribute the sieving phase across machines you control — all while the algorithm
+        stays visible without being toy-sized.
+      </p>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">View source on GitHub</a>
+        <a class="btn btn-ghost" href="#how">See how it works</a>
+      </div>
+    </div>
+
+    <!-- ---------- Features ---------- -->
+    <section id="features">
+      <div class="wrap">
+        <h2>What you can do with it</h2>
+        <p class="section-lede">
+          A single project that spans a working factorizer, a live web workbench, distributed
+          sieving, and interactive learning material.
+        </p>
+        <div class="grid">
+          <div class="card">
+            <div class="ico">🧮</div>
+            <h3>Factor an integer</h3>
+            <p>Run a one-shot factorization from the <code>qs</code> command line or the web
+              <strong>Factorize</strong> page, with tunable factor-base bound, multiplier, sieve
+              interval, and parallelism.</p>
+          </div>
+          <div class="card">
+            <div class="ico">📊</div>
+            <h3>Watch a live run</h3>
+            <p>Phase status, elapsed time per phase, progress counters, results, and run artifacts
+              are all retained for inspection in the Jobs view.</p>
+          </div>
+          <div class="card">
+            <div class="ico">🌐</div>
+            <h3>Distribute the sieve</h3>
+            <p>The server leases polynomial work while volunteer clients independently rebuild and
+              verify the same job parameters before sieving.</p>
+          </div>
+          <div class="card">
+            <div class="ico">⬇️</div>
+            <h3>Self-contained workers</h3>
+            <p>Download single-file sieve clients for <strong>Windows x64</strong> and
+              <strong>Linux x64</strong> — no .NET runtime required on the worker.</p>
+          </div>
+          <div class="card">
+            <div class="ico">🎓</div>
+            <h3>Sieve School</h3>
+            <p>A guided tour, an animated sieve window, topic quizzes, and a historical timeline
+              from Fermat and Kraitchik through to RSA-129.</p>
+          </div>
+          <div class="card">
+            <div class="ico">🔬</div>
+            <h3>Stage-by-stage tools</h3>
+            <p>Focused command-line entry points for factor-base generation, sieving, filtering,
+              linear algebra, and square-root recovery.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- How it works ---------- -->
+    <section id="how">
+      <div class="wrap">
+        <h2>How the quadratic sieve works</h2>
+        <p class="section-lede">
+          Factoring asks for non-trivial integers <code>p</code> and <code>q</code> with
+          <code>N = p × q</code>. The quadratic sieve gets there by hunting for a congruence of
+          squares.
+        </p>
+
+        <div class="math-callout">
+          <div class="eq">X² ≡ Y² (mod N)</div>
+          <div class="caption">
+            When X is not congruent to ±Y, <code>gcd(X − Y, N)</code> often exposes a factor.
+            The hard part is building such a pair of squares efficiently.
+          </div>
+        </div>
+
+        <div class="pipeline">
+          <div class="step">
+            <div class="num"></div>
+            <div>
+              <h3>Factor base</h3>
+              <p>Choose primes for which the target has suitable quadratic-residue behavior.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num"></div>
+            <div>
+              <h3>Polynomial generation &amp; sieving</h3>
+              <p>Evaluate many values near a square root, adding logarithmic weights where
+                factor-base primes divide them.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num"></div>
+            <div>
+              <h3>Relation collection</h3>
+              <p>Retain values that factor over the base, including useful large-prime partial
+                relations.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num"></div>
+            <div>
+              <h3>Filtering</h3>
+              <p>Remove unhelpful rows and combine compatible partials to shrink the problem.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num"></div>
+            <div>
+              <h3>Linear algebra over GF(2)</h3>
+              <p>Find a dependency in the parity vectors of prime exponents.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="num"></div>
+            <div>
+              <h3>Square-root recovery</h3>
+              <p>Turn that dependency into a congruence of squares and compute gcds for factors.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="note">
+          The <strong>“self-initializing”</strong> part refers to using multiple carefully
+          constructed polynomials, so sieving continues efficiently without manually retuning each one.
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Get started ---------- -->
+    <section id="start">
+      <div class="wrap">
+        <h2>Get started</h2>
+        <p class="section-lede">
+          Clone the repository, restore packages, and launch the web workbench — or factor a small
+          number straight from the command line.
+        </p>
+        <pre><code># Requires the .NET 10 SDK
+dotnet restore SIQS.slnx
+dotnet run --project SIQS.UI/SIQS.UI.csproj --urls "http://0.0.0.0:5078"
+
+# Then open http://localhost:5078
+
+# Or factor a small integer from the CLI:
+dotnet run --project QS/QS.csproj -- 15347</code></pre>
+        <div class="cta-row" style="justify-content:flex-start;margin-top:1.6rem">
+          <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">Full README &amp; source</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Repository tour ---------- -->
+    <section id="repo">
+      <div class="wrap">
+        <h2>Repository tour</h2>
+        <p class="section-lede">
+          The solution is deliberately divided by algorithmic responsibility.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Path</th><th>Responsibility</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>Factorbase/</code></td><td>Factor-base construction and related number-theory setup.</td></tr>
+              <tr><td><code>Sieving/</code></td><td>Polynomial generation, sieving, and raw relation collection.</td></tr>
+              <tr><td><code>Filtering/</code></td><td>Relation cleanup, partial-relation handling, and matrix reduction.</td></tr>
+              <tr><td><code>LinearAlgebra/</code></td><td>Parity-vector solving over GF(2).</td></tr>
+              <tr><td><code>SquareRoot/</code></td><td>Dependency reconstruction and final gcd extraction.</td></tr>
+              <tr><td><code>SIQS.Pipeline/</code></td><td>End-to-end orchestration of a local factorization.</td></tr>
+              <tr><td><code>SIQS.Contracts/</code></td><td>Shared records, run data, protocol types, and contracts.</td></tr>
+              <tr><td><code>SIQS.Overlord/</code></td><td>Distributed job coordination, leases, and relation intake.</td></tr>
+              <tr><td><code>SIQS.UI/</code></td><td>Blazor workbench, HTTP endpoints, history, and learning tools.</td></tr>
+              <tr><td><code>QS.SieveClient/</code></td><td>Cross-platform distributed sieving worker.</td></tr>
+              <tr><td><code>QS/</code></td><td>Main command-line factorization tool.</td></tr>
+              <tr><td><code>QS-FB/</code>, <code>QS.Sieve/</code>, …</td><td>Focused command-line entry points for individual pipeline stages.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="note">
+          SIQS.NET is intended for education, experimentation, benchmarking, and factoring integers
+          you are authorized to factor. It owes an enormous debt to
+          <a href="https://github.com/radii/msieve">msieve</a> and
+          <a href="https://github.com/bbuhrow/yafu">YAFU</a> — extraordinary factoring software well
+          worth studying.
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site">
+    <div class="wrap footer-inner">
+      <div>
+        <strong>SIQS.NET</strong> — a quadratic sieve workbench. Happy sieving.
+      </div>
+      <div>
+        <a href="https://github.com/JesHansen/siqs.net">GitHub</a> ·
+        <a href="#how">How it works</a> ·
+        <a href="https://siqs.net/">siqs.net</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
