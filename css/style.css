@@ -219,6 +219,53 @@ th { background: var(--bg-elev-2); font-weight: 600; }
 tr:last-child td { border-bottom: none; }
 td code { color: var(--accent-3); }
 
+/* ---------- Benchmarks ---------- */
+.bench-rig { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.chip {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  background: var(--bg-elev-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.2rem 0.8rem;
+}
+#benchmarks tbody tr.hi td { background: color-mix(in srgb, var(--accent-2) 12%, transparent); }
+#benchmarks td:last-child, #benchmarks th:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ---------- Workbench screenshot gallery ---------- */
+.shots {
+  display: grid;
+  gap: 1.1rem;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 1.4rem;
+}
+.shots figure {
+  margin: 0;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color 0.15s ease, transform 0.1s ease;
+}
+.shots figure:hover { border-color: var(--accent); transform: translateY(-2px); }
+.shots figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-bottom: 1px solid var(--border);
+}
+.shots figcaption { padding: 0.8rem 1.1rem; color: var(--text-dim); font-size: 0.92rem; }
+.shots figcaption strong { color: var(--text); }
+.shots .wide { grid-column: 1 / -1; }
+@media (max-width: 640px) {
+  .shots { grid-template-columns: 1fr; }
+  .shots .wide { grid-column: auto; }
+}
+
 /* ---------- Footer ---------- */
 footer.site {
   border-top: 1px solid var(--border);

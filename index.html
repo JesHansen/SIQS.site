@@ -24,8 +24,9 @@
       <div class="brand"><span class="mark">√</span> <span>SIQS<span style="color:var(--text-dim)">.NET</span></span></div>
       <nav class="nav-links">
         <a href="#tldr">TL;DR</a>
+        <a href="#benchmarks">Benchmarks</a>
         <a href="#features">Features</a>
-        <a href="#toolchain">Toolchain</a>
+        <a href="#workbench">Workbench</a>
         <a href="how-it-works.html">How it works</a>
         <a class="ghlink" href="https://github.com/JesHansen/siqs.net">GitHub&nbsp;&rarr;</a>
       </nav>
@@ -93,6 +94,52 @@ job workspace: runs/&lt;job-id&gt;</code></pre>
       </div>
     </div>
 
+    <!-- ---------- Benchmarks ---------- -->
+    <section id="benchmarks">
+      <div class="wrap">
+        <h2>Real numbers, real hardware</h2>
+        <p class="section-lede">
+          Each row below is a single end-to-end factorization of a fresh, balanced semiprime —
+          two prime factors of equal length, the hardest split for a given digit count — run with
+          the default auto-tuned parameters. No cherry-picking, no warm caches.
+        </p>
+
+        <div class="bench-rig">
+          <span class="chip">AMD Ryzen 7 5800X · 8C/16T</span>
+          <span class="chip">32 GB RAM</span>
+          <span class="chip">.NET 10 · Release build</span>
+          <span class="chip">default parameters</span>
+        </div>
+
+        <div class="table-scroll" style="margin-top:1.4rem">
+          <table>
+            <thead>
+              <tr><th>Composite</th><th>Factor split</th><th>Wall-clock time</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>C25</code></td><td>13 × 13 digits</td><td>0.8&nbsp;s</td></tr>
+              <tr><td><code>C35</code></td><td>18 × 18 digits</td><td>0.6&nbsp;s</td></tr>
+              <tr><td><code>C45</code></td><td>23 × 23 digits</td><td>1.6&nbsp;s</td></tr>
+              <tr><td><code>C55</code></td><td>28 × 28 digits</td><td>2.9&nbsp;s</td></tr>
+              <tr><td><code>C65</code></td><td>33 × 33 digits</td><td>6.1&nbsp;s</td></tr>
+              <tr><td><code>C75</code></td><td>38 × 38 digits</td><td>22.8&nbsp;s</td></tr>
+              <tr><td><code>C85</code></td><td>43 × 43 digits</td><td>3&nbsp;m 17&nbsp;s</td></tr>
+              <tr class="hi"><td><code>C93</code></td><td>47 × 47 digits</td><td>11&nbsp;m 7&nbsp;s</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="note">
+          These are <strong>timings for individual factorizations, not guarantees for every integer
+          of that size.</strong> The quadratic sieve's cost is dominated by the size of the number,
+          but it also varies from one composite to the next, and the sub-second rows are dominated by
+          process start-up and JIT warm-up rather than the sieve itself. Treat the table as a feel for
+          the growth curve on ordinary desktop hardware — each step of ten digits multiplies the work
+          several-fold — not as a benchmark you should expect to reproduce to the second.
+        </div>
+      </div>
+    </section>
+
     <!-- ---------- Features ---------- -->
     <section id="features">
       <div class="wrap">
@@ -145,6 +192,53 @@ job workspace: runs/&lt;job-id&gt;</code></pre>
               <code>qs-filter</code>, <code>qs-linalg</code>, <code>qs-sqrt</code> — run each
               pipeline phase standalone over plain text artifacts you can read and diff.</p>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Workbench screenshots ---------- -->
+    <section id="workbench">
+      <div class="wrap">
+        <h2>See the workbench</h2>
+        <p class="section-lede">
+          The <code>SIQS.UI</code> Blazor app is the easiest way to explore the system — start a run,
+          watch every phase, browse archived jobs and their artifacts, hand sieving out to other
+          machines, and learn the method. Here is what it looks like before you clone anything.
+        </p>
+
+        <div class="shots">
+          <figure>
+            <img src="img/workbench-factorize.png" width="1360" height="498"
+                 alt="The Factorize page: a target-N field, an advanced-parameters panel, and a recent-jobs list." loading="lazy" />
+            <figcaption><strong>Factorize.</strong> Start a one-shot run from the browser. Every
+              tuning knob has a digit-size default and an override behind <em>Advanced parameters</em>.</figcaption>
+          </figure>
+          <figure>
+            <img src="img/workbench-jobs.png" width="1360" height="668"
+                 alt="The Jobs list showing seven completed factorizations with sizes, durations, and factors." loading="lazy" />
+            <figcaption><strong>Jobs.</strong> Every factorization, live and archived — target size,
+              status, wall-clock duration, and the discovered factors, filterable by kind and status.</figcaption>
+          </figure>
+          <figure class="wide">
+            <img src="img/workbench-jobdetails.png" width="1360" height="1000"
+                 alt="A job-details page: a five-phase timeline, the factor result, and a per-phase counters table." loading="lazy" />
+            <figcaption><strong>Job details.</strong> A per-phase timeline with elapsed times, the
+              final congruence-of-squares result, and the complete counter set every stage recorded —
+              factor-base size, relations found, matrix dimensions, Block Lanczos dependencies, and more.</figcaption>
+          </figure>
+          <figure>
+            <img src="img/workbench-distributed.png" width="1360" height="768"
+                 alt="The Distributed page: submit a composite and download self-contained Windows and Linux sieve clients." loading="lazy" />
+            <figcaption><strong>Distributed.</strong> Submit a job whose sieving is shared across
+              machines, and download self-contained <strong>Windows x64</strong> and
+              <strong>Linux x64</strong> workers — no .NET runtime required on the worker.</figcaption>
+          </figure>
+          <figure>
+            <img src="img/workbench-learn.png" width="1360" height="530"
+                 alt="Sieve School: a guided tour and a quiz, with a table mapping tour steps to pipeline phases." loading="lazy" />
+            <figcaption><strong>Sieve School.</strong> A guided tour through a worked factorization
+              and a randomized quiz, each step linked to the pipeline phase it explains.</figcaption>
+          </figure>
         </div>
       </div>
     </section>
