@@ -1,53 +1,40 @@
-# siqs.net — showcase website
+# siqs.net
 
-The static marketing / showcase site for [**SIQS.NET**](https://github.com/JesHansen/siqs.net),
-an open-source self-initializing quadratic sieve implemented in modern C# and .NET.
+The source for **[siqs.net](https://siqs.net)** — the website for
+[**SIQS.NET**](https://github.com/JesHansen/siqs.net), an open-source implementation of the
+self-initializing quadratic sieve in modern C# and .NET.
 
-Served via **GitHub Pages** at <https://siqs.net>.
+This repository contains only the static showcase site. The factorization workbench itself —
+the C# / .NET source code, CLI, Blazor web UI, and distributed sieving — lives in the
+[JesHansen/siqs.net](https://github.com/JesHansen/siqs.net) repository.
 
-## Contents
+## About the site
+
+It's a single static page, hand-written in plain HTML and CSS with **no build step and no
+dependencies**. It's served via [GitHub Pages](https://pages.github.com/) at
+<https://siqs.net> and supports both light and dark themes.
 
 | File | Purpose |
 | --- | --- |
-| `index.html` | The single-page showcase site. |
+| `index.html` | The showcase page. |
 | `404.html` | Custom not-found page. |
-| `css/style.css` | All styling (plain CSS, no build step, light + dark). |
-| `CNAME` | Tells GitHub Pages to serve the site at `siqs.net`. |
-| `.nojekyll` | Disables Jekyll processing — the site is plain static HTML. |
+| `css/style.css` | All styling (plain CSS, light + dark). |
+| `CNAME` | Binds the site to the `siqs.net` custom domain. |
+| `.nojekyll` | Serves the files as-is, skipping Jekyll processing. |
 
-No build tooling is required. Editing the HTML/CSS and pushing to the default branch redeploys the site.
+## Working on it locally
 
-## Publishing (one-time setup)
-
-1. Create a **new** GitHub repository (name it anything *except* `siqs.net`, since that name is
-   already taken by the source-code repo — e.g. `siqs.net-site`).
-2. Push this directory to it:
-   ```bash
-   git remote add origin https://github.com/JesHansen/<repo-name>.git
-   git push -u origin main
-   ```
-3. In the repo's **Settings → Pages**, set the source to **Deploy from a branch**, branch `main`,
-   folder `/ (root)`.
-4. Under **Settings → Pages → Custom domain**, confirm `siqs.net` (the `CNAME` file already sets it).
-5. At your DNS registrar, point the apex domain at GitHub Pages:
-   ```
-   A     185.199.108.153
-   A     185.199.109.153
-   A     185.199.110.153
-   A     185.199.111.153
-   AAAA  2606:50c0:8000::153
-   AAAA  2606:50c0:8001::153
-   AAAA  2606:50c0:8002::153
-   AAAA  2606:50c0:8003::153
-   ```
-   Optionally add `CNAME  www  jeshansen.github.io.` for the `www` subdomain.
-6. Once DNS resolves, tick **Enforce HTTPS** in Settings → Pages.
-
-## Local preview
-
-Any static file server works, for example:
+Because it's just static files, any local web server works — for example:
 
 ```bash
 python -m http.server 8080
 # then open http://localhost:8080
 ```
+
+Edit the HTML or CSS, and pushing to `main` redeploys the site automatically.
+
+## License and credits
+
+The quadratic sieve implementation that this site showcases owes an enormous debt to
+[msieve](https://github.com/radii/msieve) and [YAFU](https://github.com/bbuhrow/yafu). See the
+[main SIQS.NET repository](https://github.com/JesHansen/siqs.net) for the full acknowledgements.
