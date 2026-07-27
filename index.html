@@ -23,10 +23,10 @@
     <div class="wrap nav">
       <div class="brand"><span class="mark">√</span> <span>SIQS<span style="color:var(--text-dim)">.NET</span></span></div>
       <nav class="nav-links">
+        <a href="#tldr">TL;DR</a>
         <a href="#features">Features</a>
-        <a href="#how">How it works</a>
-        <a href="#repo">Repository</a>
-        <a href="#start">Get started</a>
+        <a href="#toolchain">Toolchain</a>
+        <a href="how-it-works.html">How it works</a>
         <a class="ghlink" href="https://github.com/JesHansen/siqs.net">GitHub&nbsp;&rarr;</a>
       </nav>
     </div>
@@ -40,13 +40,56 @@
       <p class="tagline">An open-source implementation of a classic integer-factorization algorithm.</p>
       <p class="lede">
         SIQS.NET is both a factorization workbench and an <em>explorable</em> implementation of the
-        self-initializing quadratic sieve. Use it from the command line, drive it through a Blazor
-        web UI, or distribute the sieving phase across machines you control — all while the algorithm
-        stays visible without being toy-sized.
+        self-initializing quadratic sieve. It routinely factors composites in the 85&ndash;100 digit
+        range on ordinary hardware — and every phase of the algorithm is visible, inspectable, and
+        documented.
       </p>
-      <div class="cta-row">
+
+      <!-- ---------- TL;DR ---------- -->
+      <div class="tldr" id="tldr">
+        <div class="tldr-head">
+          <h2>TL;DR — I just want to factor stuff</h2>
+          <span class="badge">⏱ 2-minute read</span>
+        </div>
+        <ol>
+          <li>
+            <p>Install the <a href="https://dotnet.microsoft.com/download">.NET 10 SDK</a>, then clone and build:</p>
+            <pre><code>git clone https://github.com/JesHansen/siqs.net.git
+cd siqs.net
+dotnet build -c Release SIQS.slnx</code></pre>
+          </li>
+          <li>
+            <p>Point <code>qs</code> at the number you want factored:</p>
+            <pre><code>dotnet run -c Release --project QS/QS.csproj -- 150478035830330483870744795468187571781390056303346096534807</code></pre>
+            <p>You'll see live progress for each phase — factor base, sieving, filtering, linear
+              algebra, square root — and at the end the factorization:</p>
+            <pre><code>  [factor base]    size, multiplier, and bound
+  [sieving]        relations found / needed  (live)
+  [filtering]      matrix size before and after pruning
+  [linear algebra] null-space dependencies found
+  [square root]    dependency attempts
+
+&lt;N&gt; = &lt;factor1&gt; * &lt;factor2&gt;
+job workspace: runs/&lt;job-id&gt;</code></pre>
+          </li>
+          <li>
+            <p>Prefer buttons over terminals? Start the web workbench and open
+              <code>http://localhost:5078</code>:</p>
+            <pre><code>dotnet run -c Release --project SIQS.UI/SIQS.UI.csproj --urls "http://localhost:5078"</code></pre>
+          </li>
+        </ol>
+        <p style="margin-top:1.2rem;color:var(--text-dim)">
+          That's the whole workflow. A prime input exits cleanly with &ldquo;no non-trivial
+          factor&rdquo;; <kbd>Ctrl+C</kbd> cancels a run and leaves its artifacts resumable with
+          <code>--resume</code>. Sensible defaults are chosen from the digit size of your number —
+          no tuning required. Curious what's happening under the hood?
+          <a href="how-it-works.html">Read the deep dive.</a>
+        </p>
+      </div>
+
+      <div class="cta-row" style="margin-top:2rem">
         <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">View source on GitHub</a>
-        <a class="btn btn-ghost" href="#how">See how it works</a>
+        <a class="btn btn-ghost" href="how-it-works.html">How the sieve works&nbsp;→</a>
       </div>
     </div>
 
@@ -55,7 +98,7 @@
       <div class="wrap">
         <h2>What you can do with it</h2>
         <p class="section-lede">
-          A single project that spans a working factorizer, a live web workbench, distributed
+          A single solution that spans a working factorizer, a live web workbench, distributed
           sieving, and interactive learning material.
         </p>
         <div class="grid">
@@ -63,58 +106,65 @@
             <div class="ico">🧮</div>
             <h3>Factor an integer</h3>
             <p>Run a one-shot factorization from the <code>qs</code> command line or the web
-              <strong>Factorize</strong> page, with tunable factor-base bound, multiplier, sieve
-              interval, and parallelism.</p>
+              <strong>Factorize</strong> page. Every parameter — factor-base bound, multiplier,
+              sieve interval, large-prime bounds, parallelism — has a sensible digit-size default
+              and a CLI override.</p>
           </div>
           <div class="card">
             <div class="ico">📊</div>
             <h3>Watch a live run</h3>
-            <p>Phase status, elapsed time per phase, progress counters, results, and run artifacts
-              are all retained for inspection in the Jobs view.</p>
+            <p>Phase status, elapsed time per phase, relation counters, matrix dimensions, and run
+              artifacts are all retained for inspection in the Jobs view. Interrupted runs resume
+              from their workspace.</p>
           </div>
           <div class="card">
             <div class="ico">🌐</div>
             <h3>Distribute the sieve</h3>
-            <p>The server leases polynomial work while volunteer clients independently rebuild and
-              verify the same job parameters before sieving.</p>
+            <p>Sieving dominates the cost, so the server can lease disjoint slices of polynomial
+              work to volunteer clients over HTTP. Workers independently rebuild and verify the job
+              parameters before sieving a single value.</p>
           </div>
           <div class="card">
             <div class="ico">⬇️</div>
             <h3>Self-contained workers</h3>
             <p>Download single-file sieve clients for <strong>Windows x64</strong> and
-              <strong>Linux x64</strong> — no .NET runtime required on the worker.</p>
+              <strong>Linux x64</strong> straight from the workbench — no .NET runtime required on
+              the worker machine.</p>
           </div>
           <div class="card">
             <div class="ico">🎓</div>
             <h3>Sieve School</h3>
-            <p>A guided tour, an animated sieve window, topic quizzes, and a historical timeline
-              from Fermat and Kraitchik through to RSA-129.</p>
+            <p>A guided tour through a worked factorization, an animated sieve window, topic
+              quizzes, and a historical timeline from Fermat and Kraitchik through Pomerance and
+              RSA-129.</p>
           </div>
           <div class="card">
             <div class="ico">🔬</div>
             <h3>Stage-by-stage tools</h3>
-            <p>Focused command-line entry points for factor-base generation, sieving, filtering,
-              linear algebra, and square-root recovery.</p>
+            <p>Five focused CLI tools — <code>qs-fb</code>, <code>qs-sieve</code>,
+              <code>qs-filter</code>, <code>qs-linalg</code>, <code>qs-sqrt</code> — run each
+              pipeline phase standalone over plain text artifacts you can read and diff.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ---------- How it works ---------- -->
-    <section id="how">
+    <!-- ---------- Pipeline at a glance ---------- -->
+    <section id="pipeline">
       <div class="wrap">
-        <h2>How the quadratic sieve works</h2>
+        <h2>The pipeline at a glance</h2>
         <p class="section-lede">
-          Factoring asks for non-trivial integers <code>p</code> and <code>q</code> with
-          <code>N = p × q</code>. The quadratic sieve gets there by hunting for a congruence of
-          squares.
+          A factorization passes through five phases. Each is its own library with its own CLI
+          tool, and each hands the next a plain UTF-8 text file — parsable by human and machine
+          alike. <a href="how-it-works.html">The deep dive</a> explains the mathematics of every
+          step.
         </p>
 
         <div class="math-callout">
           <div class="eq">X² ≡ Y² (mod N)</div>
           <div class="caption">
-            When X is not congruent to ±Y, <code>gcd(X − Y, N)</code> often exposes a factor.
-            The hard part is building such a pair of squares efficiently.
+            The whole machine exists to build one congruence of squares. When X ≢ ±Y,
+            <code>gcd(X − Y, N)</code> reveals a factor.
           </div>
         </div>
 
@@ -122,52 +172,130 @@
           <div class="step">
             <div class="num"></div>
             <div>
-              <h3>Factor base</h3>
-              <p>Choose primes for which the target has suitable quadratic-residue behavior.</p>
+              <h3>Factor base &nbsp;<code style="font-size:0.8em">qs-fb → factor_base.txt</code></h3>
+              <p>Pick a multiplier, then collect the primes p for which the scaled target is a
+                quadratic residue — the only primes that can ever divide a sieve value.</p>
             </div>
           </div>
           <div class="step">
             <div class="num"></div>
             <div>
-              <h3>Polynomial generation &amp; sieving</h3>
-              <p>Evaluate many values near a square root, adding logarithmic weights where
-                factor-base primes divide them.</p>
+              <h3>Sieving &nbsp;<code style="font-size:0.8em">qs-sieve → relations_*.txt</code></h3>
+              <p>Generate families of polynomials and sieve them over a symmetric interval, adding
+                logarithmic weights where factor-base primes divide. Survivors become relations;
+                near-misses become large-prime partials. This is the hot path — and the part that
+                can be distributed.</p>
             </div>
           </div>
           <div class="step">
             <div class="num"></div>
             <div>
-              <h3>Relation collection</h3>
-              <p>Retain values that factor over the base, including useful large-prime partial
-                relations.</p>
+              <h3>Filtering &nbsp;<code style="font-size:0.8em">qs-filter → filtered_matrix.txt</code></h3>
+              <p>Combine partial relations through large-prime graph cycles, remove duplicates and
+                singletons, and trim the result into a lean sparse matrix over GF(2).</p>
             </div>
           </div>
           <div class="step">
             <div class="num"></div>
             <div>
-              <h3>Filtering</h3>
-              <p>Remove unhelpful rows and combine compatible partials to shrink the problem.</p>
+              <h3>Linear algebra &nbsp;<code style="font-size:0.8em">qs-linalg → dependencies.txt</code></h3>
+              <p>Run Block Lanczos over GF(2) to find non-empty sets of relations whose exponent
+                vectors XOR to zero — each one a candidate congruence of squares.</p>
             </div>
           </div>
           <div class="step">
             <div class="num"></div>
             <div>
-              <h3>Linear algebra over GF(2)</h3>
-              <p>Find a dependency in the parity vectors of prime exponents.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="num"></div>
-            <div>
-              <h3>Square-root recovery</h3>
-              <p>Turn that dependency into a congruence of squares and compute gcds for factors.</p>
+              <h3>Square root &nbsp;<code style="font-size:0.8em">qs-sqrt → factors.txt</code></h3>
+              <p>Reconstruct X and Y from a dependency, verify every exponent sum is even, and take
+                GCDs against N. A non-trivial answer is your factor.</p>
             </div>
           </div>
         </div>
 
         <div class="note">
-          The <strong>“self-initializing”</strong> part refers to using multiple carefully
-          constructed polynomials, so sieving continues efficiently without manually retuning each one.
+          One command, <code>qs.exe</code>, runs all five phases in a single process with live
+          console progress — the per-phase tools exist so you can study, debug, or benchmark any
+          stage in isolation against hand-crafted inputs.
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- Toolchain / repository ---------- -->
+    <section id="toolchain">
+      <div class="wrap">
+        <h2>The toolchain</h2>
+        <p class="section-lede">
+          The solution is deliberately divided by algorithmic responsibility — phase libraries with
+          typed APIs, thin CLI front-ends, a shared contracts library, and an orchestration
+          pipeline that both the console capstone and the web UI sit on top of.
+        </p>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>Component</th><th>What it is</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>qs.exe</code></td><td>The capstone: factors a number end-to-end in one process with live progress, resumable workspaces, and meaningful exit codes.</td></tr>
+              <tr><td><code>qs-fb</code>, <code>qs-sieve</code>, <code>qs-filter</code>, <code>qs-linalg</code>, <code>qs-sqrt</code></td><td>Standalone per-phase tools that read and write the documented text artifacts.</td></tr>
+              <tr><td><code>SIQS.UI</code></td><td>Blazor web workbench: Factorize, Jobs &amp; artifacts, Distributed coordination, Sieve School, and history.</td></tr>
+              <tr><td><code>SIQS.Pipeline</code></td><td>Orchestration library — owns defaults, runs phases in order, tracks the job workspace, reports progress.</td></tr>
+              <tr><td><code>SIQS.Overlord</code> + <code>qs-sieve-client</code></td><td>Distributed sieving: the coordinator leases work slices; the self-contained client verifies, sieves, and uploads relations.</td></tr>
+              <tr><td><code>Factorbase</code>, <code>Sieving</code>, <code>Filtering</code>, <code>LinearAlgebra</code>, <code>SquareRoot</code></td><td>The five phase libraries — the actual mathematics, each with its own xUnit test project.</td></tr>
+              <tr><td><code>CompositeGenerator</code></td><td>Generates fresh RSA-shaped semiprime targets: <code>CompositeGenerator.exe 55 | qs.exe</code>.</td></tr>
+              <tr><td><code>SIQS.Benchmarks</code></td><td>BenchmarkDotNet harness isolating the hot kernels — Block Lanczos multiplies and the sieve fill/scan seam.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 style="margin-top:2.5rem">Everything is a text file</h3>
+        <p style="color:var(--text-dim);max-width:680px">
+          Every phase writes plain UTF-8 artifacts — <code>factor_base.txt</code>,
+          <code>relations_0000.txt</code>, <code>filtered_matrix.txt</code>,
+          <code>dependencies.txt</code>, <code>factors.txt</code> — with documented, versioned
+          header contracts. You can open any intermediate state of a factorization in a text
+          editor, diff two runs, or feed a hand-edited file back into the next phase.
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- Distributed ---------- -->
+    <section id="distributed">
+      <div class="wrap">
+        <h2>Distributed sieving</h2>
+        <p class="section-lede">
+          Sieving is embarrassingly parallel: disjoint polynomial families can be processed on
+          different machines with no coordination beyond handing out assignments. SIQS.NET
+          exploits that.
+        </p>
+        <div class="grid">
+          <div class="card">
+            <div class="ico">🗼</div>
+            <h3>The Overlord coordinates</h3>
+            <p>The server owns the job: it leases slices of polynomial indices, validates every
+              uploaded relation, re-issues abandoned leases, and runs filtering, linear algebra,
+              and square root centrally once enough relations arrive.</p>
+          </div>
+          <div class="card">
+            <div class="ico">🤝</div>
+            <h3>Workers verify, then trust</h3>
+            <p>A client performs a protocol handshake and independently reconstructs the factor
+              base and sieving parameters from the job descriptor. If its reconstruction disagrees
+              with the server's, it declines the job.</p>
+          </div>
+          <div class="card">
+            <div class="ico">📦</div>
+            <h3>Drop-in replacement</h3>
+            <p>The distributed sieve produces byte-compatible relation artifacts, so the rest of
+              the pipeline can't tell the difference between one machine and twenty.</p>
+          </div>
+        </div>
+        <pre style="margin-top:1.6rem"><code># On each worker — download from the server's Distributed page, then:
+.\qs-sieve-client.exe http://your-siqs-server:5078     # Windows
+./qs-sieve-client http://your-siqs-server:5078          # Linux</code></pre>
+        <div class="note">
+          The distributed API is designed for a trusted LAN. If you expose a server beyond one,
+          put it behind authentication, TLS, firewalling, and rate limits.
         </div>
       </div>
     </section>
@@ -177,57 +305,30 @@
       <div class="wrap">
         <h2>Get started</h2>
         <p class="section-lede">
-          Clone the repository, restore packages, and launch the web workbench — or factor a small
-          number straight from the command line.
+          Everything runs from a fresh clone with the .NET 10 SDK — no other dependencies.
         </p>
-        <pre><code># Requires the .NET 10 SDK
-dotnet restore SIQS.slnx
-dotnet run --project SIQS.UI/SIQS.UI.csproj --urls "http://0.0.0.0:5078"
+        <pre><code># Build and test everything
+dotnet build SIQS.slnx
+dotnet test --solution SIQS.slnx
 
-# Then open http://localhost:5078
+# Factor from the command line (add --parallelism 1 for reproducible artifacts)
+dotnet run -c Release --project QS/QS.csproj -- &lt;your composite&gt;
 
-# Or factor an integer from the CLI:
-dotnet run --project QS/QS.csproj -- 150478035830330483870744795468187571781390056303346096534807</code></pre>
+# Explore the full workbench in a browser
+dotnet run -c Release --project SIQS.UI/SIQS.UI.csproj --urls "http://localhost:5078"
+
+# Generate a fresh 55-digit test target and factor it in one line
+CompositeGenerator.exe 55 | qs.exe</code></pre>
         <div class="cta-row" style="justify-content:flex-start;margin-top:1.6rem">
           <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">Full README &amp; source</a>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- Repository tour ---------- -->
-    <section id="repo">
-      <div class="wrap">
-        <h2>Repository tour</h2>
-        <p class="section-lede">
-          The solution is deliberately divided by algorithmic responsibility.
-        </p>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr><th>Path</th><th>Responsibility</th></tr>
-            </thead>
-            <tbody>
-              <tr><td><code>Factorbase/</code></td><td>Factor-base construction and related number-theory setup.</td></tr>
-              <tr><td><code>Sieving/</code></td><td>Polynomial generation, sieving, and raw relation collection.</td></tr>
-              <tr><td><code>Filtering/</code></td><td>Relation cleanup, partial-relation handling, and matrix reduction.</td></tr>
-              <tr><td><code>LinearAlgebra/</code></td><td>Parity-vector solving over GF(2).</td></tr>
-              <tr><td><code>SquareRoot/</code></td><td>Dependency reconstruction and final gcd extraction.</td></tr>
-              <tr><td><code>SIQS.Pipeline/</code></td><td>End-to-end orchestration of a local factorization.</td></tr>
-              <tr><td><code>SIQS.Contracts/</code></td><td>Shared records, run data, protocol types, and contracts.</td></tr>
-              <tr><td><code>SIQS.Overlord/</code></td><td>Distributed job coordination, leases, and relation intake.</td></tr>
-              <tr><td><code>SIQS.UI/</code></td><td>Blazor workbench, HTTP endpoints, history, and learning tools.</td></tr>
-              <tr><td><code>QS.SieveClient/</code></td><td>Cross-platform distributed sieving worker.</td></tr>
-              <tr><td><code>QS/</code></td><td>Main command-line factorization tool.</td></tr>
-              <tr><td><code>QS-FB/</code>, <code>QS.Sieve/</code>, …</td><td>Focused command-line entry points for individual pipeline stages.</td></tr>
-            </tbody>
-          </table>
+          <a class="btn btn-ghost" href="how-it-works.html">Understand the algorithm&nbsp;→</a>
         </div>
         <div class="note">
-          SIQS.NET is intended for education, experimentation, benchmarking, and factoring integers
-          you are authorized to factor. It owes an enormous debt to
+          SIQS.NET is intended for education, experimentation, benchmarking, and factoring
+          integers you are authorized to factor. It owes an enormous debt to
           <a href="https://github.com/radii/msieve">msieve</a> and
-          <a href="https://github.com/bbuhrow/yafu">YAFU</a> — extraordinary factoring software well
-          worth studying.
+          <a href="https://github.com/bbuhrow/yafu">YAFU</a> — extraordinary factoring software
+          well worth studying.
         </div>
       </div>
     </section>
@@ -240,7 +341,7 @@ dotnet run --project QS/QS.csproj -- 1504780358303304838707447954681875717813900
       </div>
       <div>
         <a href="https://github.com/JesHansen/siqs.net">GitHub</a> ·
-        <a href="#how">How it works</a> ·
+        <a href="how-it-works.html">How it works</a> ·
         <a href="https://siqs.net/">siqs.net</a>
       </div>
     </div>
