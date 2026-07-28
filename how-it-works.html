@@ -6,58 +6,84 @@
   <title>How the self-initializing quadratic sieve works — SIQS.NET</title>
   <meta name="description" content="A careful, readable walkthrough of the self-initializing quadratic sieve: congruences of squares, smooth relations, sieving with logarithms, SIQS polynomials, large-prime partials, Block Lanczos, and square-root recovery — as implemented in SIQS.NET." />
   <link rel="canonical" href="https://siqs.net/how-it-works.html" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='monospace'>&#8730;</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='serif' font-style='italic'>&#8730;</text></svg>" />
+  <link rel="preload" href="fonts/ebgaramond-600-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/inter-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <noscript><style>.reveal,.reveal-line{opacity:1!important;transform:none!important}</style></noscript>
   <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("siqs-theme");
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
+    })();
     MathJax = {
-      tex: {
-        inlineMath: [['\\(', '\\)']],
-        displayMath: [['$$', '$$'], ['\\[', '\\]']]
-      },
-      chtml: { displayAlign: 'center' }
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      chtml: { displayAlign: 'center' },
+      startup: {
+        pageReady: function () {
+          return MathJax.startup.defaultPageReady().then(function () {
+            var jump = function () {
+              if (!location.hash) return;
+              var el = document.querySelector(location.hash);
+              if (el) el.scrollIntoView();
+            };
+            jump();
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(jump);
+            window.addEventListener("load", jump);
+          });
+        }
+      }
     };
   </script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
 </head>
 <body>
 
+  <div class="progress" aria-hidden="true"></div>
+
   <header class="site">
-    <div class="wrap nav">
-      <div class="brand"><span class="mark">√</span> <span><a href="index.html" style="color:inherit">SIQS<span style="color:var(--text-dim)">.NET</span></a></span></div>
+    <div class="nav">
+      <div class="brand"><a href="index.html"><span class="mark">√</span><span>SIQS<span class="dot">.NET</span></span></a></div>
       <nav class="nav-links">
-        <a href="index.html#tldr">TL;DR</a>
-        <a href="index.html#features">Features</a>
-        <a href="index.html#toolchain">Toolchain</a>
-        <a href="how-it-works.html">How it works</a>
+        <a class="hide-sm" href="index.html#start">Start</a>
+        <a class="hide-sm" href="index.html#pipeline">Pipeline</a>
+        <a class="hide-sm" href="index.html#workbench">Workbench</a>
+        <a href="how-it-works.html" class="active">How&nbsp;it&nbsp;works</a>
+        <a href="appendix.html">Appendix</a>
         <a class="ghlink" href="https://github.com/JesHansen/siqs.net">GitHub&nbsp;&rarr;</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zM4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2zm18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2zM5.6 6.9 4.2 5.5a1 1 0 0 1 1.4-1.4L7 5.5A1 1 0 0 1 5.6 6.9zm12.8 12.8L17 18.3a1 1 0 0 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.4zM18.4 6.9A1 1 0 0 1 17 5.5l1.4-1.4a1 1 0 0 1 1.4 1.4zM5.6 19.7a1 1 0 0 1-1.4-1.4L5.6 17A1 1 0 0 1 7 18.3z"/></svg>
+        </button>
       </nav>
     </div>
   </header>
 
   <main class="article">
-    <h1>How the self-initializing quadratic sieve works</h1>
-    <p class="subtitle">
-      A careful walkthrough of the algorithm inside SIQS.NET — from Fermat's four-century-old idea
-      to the sparse linear algebra that finishes the job.
-      <span class="badge" style="margin-left:0.5rem">⏱ ~30-minute read</span>
-    </p>
+    <div class="article-hero">
+      <span class="kicker">The deep dive · ~30-minute read</span>
+      <h1>How the self-initializing quadratic sieve works</h1>
+      <p class="subtitle">From Fermat's four-century-old idea to the sparse linear algebra that finishes the job — the algorithm inside SIQS.NET, walked end to end.</p>
+    </div>
 
     <p>
-      This page assumes comfort with modular arithmetic and a tolerance for prime numbers, but
-      nothing beyond undergraduate mathematics. Every quantity named here —
-      <code>factor_base.txt</code>, relation files, the matrix, the dependencies — is a real text
-      artifact that SIQS.NET writes to disk during a run, so you can follow along inside an actual
-      factorization.
+      This page assumes comfort with modular arithmetic and a tolerance for prime numbers, but nothing
+      beyond undergraduate mathematics. Every quantity named here — <code>factor_base.txt</code>, relation
+      files, the matrix, the dependencies — is a real text artifact that SIQS.NET writes to disk during a
+      run, so you can follow along inside an actual factorization.
     </p>
 
-    <nav class="toc">
+    <nav class="toc reveal">
       <h2>Contents</h2>
       <ol>
         <li><a href="#problem">The problem</a></li>
         <li><a href="#congruence">Fermat's idea, industrialized</a></li>
         <li><a href="#smooth">Smooth numbers and the factor base</a></li>
         <li><a href="#sieve">The sieve: why it's fast</a></li>
-        <li><a href="#siqs">Self-initialization: many polynomials, cheaply</a></li>
+        <li><a href="#siqs">Self-initialization</a></li>
         <li><a href="#largeprimes">Large primes: profiting from near-misses</a></li>
         <li><a href="#filtering">Filtering: preparing the matrix</a></li>
         <li><a href="#linalg">Linear algebra over GF(2)</a></li>
@@ -69,97 +95,88 @@
     </nav>
 
     <!-- ============================================================ -->
-    <h2 id="problem">1. The problem</h2>
+    <h2 id="problem"><span class="folio">§01</span> The problem</h2>
 
     <p>
       Take two large primes \(p\) and \(q\), multiply them, and hand someone the product
-      \(N = p \cdot q\). Recovering \(p\) and \(q\) from \(N\) is the
-      <em>integer factorization problem</em>, and for well-chosen primes it is spectacularly
-      harder than the multiplication was. That asymmetry is not a curiosity: the security of RSA
-      rests on it. Factoring the RSA-129 challenge number in 1994 — using precisely the algorithm
-      described on this page — took eight months and around 600 volunteers' machines.
+      \(N = p \cdot q\). Recovering \(p\) and \(q\) from \(N\) is the <em>integer factorization
+      problem</em>, and for well-chosen primes it is spectacularly harder than the multiplication was.
+      That asymmetry is not a curiosity: the security of RSA rests on it. Factoring the RSA-129 challenge
+      number in 1994 — using precisely the algorithm described on this page — took eight months and around
+      600 volunteers' machines.
     </p>
 
     <p>
-      Trial division tests candidate divisors one at a time and needs on the order of
-      \(\sqrt{N}\) steps; for a 90-digit \(N\) that is roughly \(10^{45}\) operations — not
-      happening. Every serious factoring algorithm therefore abandons the search for divisors and
-      instead manufactures a special kind of <em>coincidence</em>. The quadratic sieve is the
-      simplest algorithm in that family that is genuinely fast, and for numbers up to roughly 100
-      digits it remained the world record holder until the general number field sieve overtook it.
-      SIQS — the <em>self-initializing</em> quadratic sieve — is its refined, modern form, and the
-      one SIQS.NET implements.
+      Trial division tests candidate divisors one at a time and needs on the order of \(\sqrt{N}\) steps;
+      for a 90-digit \(N\) that is roughly \(10^{45}\) operations — not happening. Every serious factoring
+      algorithm therefore abandons the search for divisors and instead manufactures a special kind of
+      <em>coincidence</em>.
+    </p>
+
+    <blockquote class="pull">The quadratic sieve is the simplest genuinely fast algorithm in that family.</blockquote>
+
+    <p>
+      For numbers up to roughly 100 digits it held the world record until the general number field sieve
+      overtook it. SIQS — the <em>self-initializing</em> quadratic sieve — is its refined, modern form, and
+      the one SIQS.NET implements.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="congruence">2. Fermat's idea, industrialized</h2>
+    <h2 id="congruence"><span class="folio">§02</span> Fermat's idea, industrialized</h2>
 
     <p>
-      In the 1640s Fermat observed that finding a difference of squares factors a number
-      directly. If
+      In the 1640s Fermat observed that finding a difference of squares factors a number directly. If
     </p>
     $$ N = x^2 - y^2 = (x-y)(x+y), $$
     <p>
-      then the two parenthesized terms are factors. Fermat's method searches for such \(x\) by
-      walking upward from \(\lceil\sqrt{N}\rceil\) and testing whether \(x^2 - N\) is a perfect
-      square. It works beautifully when \(p\) and \(q\) are close together and abysmally
-      otherwise.
+      then the two parenthesized terms are factors. Fermat's method searches for such \(x\) by walking
+      upward from \(\lceil\sqrt{N}\rceil\) and testing whether \(x^2 - N\) is a perfect square. It works
+      beautifully when \(p\) and \(q\) are close together and abysmally otherwise.
     </p>
 
     <p>
-      The industrial upgrade, due to Kraitchik in the 1920s, is to relax equality to
-      <em>congruence</em>. We no longer need \(x^2 - y^2\) to equal \(N\) — it is enough that
+      The industrial upgrade, due to Kraitchik in the 1920s, is to relax equality to <em>congruence</em>.
+      We no longer need \(x^2 - y^2\) to equal \(N\) — it is enough that
     </p>
     $$ X^2 \equiv Y^2 \pmod{N}, \qquad X \not\equiv \pm Y \pmod{N}. $$
     <p>
-      Then \(N\) divides \(X^2 - Y^2 = (X-Y)(X+Y)\) but divides neither bracket by itself, so the
-      prime factors of \(N\) must split between the two brackets. Computing
-    </p>
-    $$ \gcd(X - Y,\; N) \quad\text{and}\quad \gcd(X + Y,\; N) $$
-    <p>
-      — each a fast operation — hands us a non-trivial factor. For a random such congruence with
-      \(N\) a product of two primes, the probability that the split is non-trivial is at least
-      \(1/2\). Collect a handful of independent congruences and success is all but guaranteed.
+      Then \(N\) divides \(X^2 - Y^2 = (X-Y)(X+Y)\) but divides neither bracket by itself, so the prime
+      factors of \(N\) must split between the two brackets. Computing \(\gcd(X - Y, N)\) and
+      \(\gcd(X + Y, N)\) — each fast — hands us a non-trivial factor. For a random such congruence with
+      \(N\) a product of two primes, the split is non-trivial with probability at least \(1/2\).
     </p>
 
-    <div class="defbox">
+    <div class="defbox reveal">
       <div class="deftitle">The whole game</div>
       <p>
-        Every phase of the quadratic sieve exists to construct one congruence
-        \(X^2 \equiv Y^2 \pmod N\) with \(X \not\equiv \pm Y\). Nothing else. The sieving, the
-        polynomials, the giant matrix — all of it is bookkeeping in service of this single line.
+        Every phase of the quadratic sieve exists to construct one congruence \(X^2 \equiv Y^2 \pmod N\)
+        with \(X \not\equiv \pm Y\). Nothing else. The sieving, the polynomials, the giant matrix — all of
+        it is bookkeeping in service of this single line.
       </p>
     </div>
 
     <p>
-      But how do you find \(X\) and \(Y\)? Here is the key manoeuvre, made systematic by Dixon:
-      don't look for one perfect coincidence — <em>multiply many small ones together</em>.
-      Suppose we collect many values \(x_i\) for which we completely know the prime factorization
-      of \(x_i^2 \bmod N\):
+      But how do you find \(X\) and \(Y\)? Here is the key manoeuvre, made systematic by Dixon: don't look
+      for one perfect coincidence — <em>multiply many small ones together</em>. Suppose we collect many
+      values \(x_i\) for which we completely know the prime factorization of \(x_i^2 \bmod N\):
     </p>
     $$ x_i^2 \equiv p_1^{e_{i1}} \, p_2^{e_{i2}} \cdots p_k^{e_{ik}} \pmod{N}. $$
     <p>
-      Each such factored congruence is called a <strong>relation</strong>. If we multiply a
-      subset \(S\) of relations together, the left side is automatically a square — it is
-      \(\bigl(\prod_{i \in S} x_i\bigr)^2\). The right side is a square precisely when every
-      prime's total exponent \(\sum_{i\in S} e_{ij}\) is <em>even</em>. So the search for a
-      congruence of squares reduces to a search for a subset of relations whose exponent vectors
-      sum to all-even values.
+      Each such factored congruence is called a <strong>relation</strong>. Multiply a subset \(S\) of
+      relations together and the left side is automatically a square — it is
+      \(\bigl(\prod_{i \in S} x_i\bigr)^2\). The right side is a square precisely when every prime's total
+      exponent \(\sum_{i\in S} e_{ij}\) is <em>even</em>.
     </p>
 
     <p>
-      And that is linear algebra. Reduce every exponent modulo 2, so each relation becomes a 0/1
-      vector over the field \(\mathbb{F}_2 = \mathrm{GF}(2)\), one coordinate per prime. A subset
-      with all-even exponent sums is exactly a set of vectors that XOR to zero — a linear
-      dependency. Collect more relations than there are primes in play, and the vectors
-      <em>must</em> be linearly dependent: dependencies are guaranteed by pigeonhole, and each one
-      yields a candidate congruence of squares.
+      And that is linear algebra. Reduce every exponent modulo 2, so each relation becomes a 0/1 vector
+      over \(\mathbb{F}_2 = \mathrm{GF}(2)\), one coordinate per prime. A subset with all-even exponent
+      sums is exactly a set of vectors that XOR to zero — a linear dependency. Collect more relations than
+      there are primes in play, and the vectors <em>must</em> be dependent: dependencies are guaranteed by
+      pigeonhole, and each one yields a candidate congruence of squares.
     </p>
 
-    <p>
-      The quadratic sieve is, at heart, a very fast relation factory bolted onto this framework.
-      Three questions remain, and they structure the rest of this page:
-    </p>
+    <p>The quadratic sieve is, at heart, a very fast relation factory bolted onto this framework. Three questions remain, and they structure the rest of this page:</p>
     <ul>
       <li>Which primes do we allow on the right-hand side? (<a href="#smooth">§3, the factor base</a>)</li>
       <li>How do we find values whose squares factor over those primes, fast? (<a href="#sieve">§4–5, the sieve and SIQS</a>)</li>
@@ -167,22 +184,20 @@
     </ul>
 
     <!-- ============================================================ -->
-    <h2 id="smooth">3. Smooth numbers and the factor base</h2>
+    <h2 id="smooth"><span class="folio">§03</span> Smooth numbers and the factor base</h2>
 
     <p>
-      A number is called <strong>\(B\)-smooth</strong> if all of its prime factors are at most
-      \(B\). Smooth numbers are the currency of the quadratic sieve: a relation is precisely a
-      value whose square, reduced mod \(N\), is smooth over our chosen prime list. That list is
-      the <strong>factor base</strong>.
+      A number is called <strong>\(B\)-smooth</strong> if all of its prime factors are at most \(B\).
+      Smooth numbers are the currency of the quadratic sieve: a relation is precisely a value whose square,
+      reduced mod \(N\), is smooth over our chosen prime list. That list is the <strong>factor base</strong>.
     </p>
 
     <h3>Only half the primes can play</h3>
     <p>
-      The quadratic sieve generates its candidate values from a polynomial (we'll meet it
-      shortly) whose values \(V(x)\) satisfy \(T(x)^2 \equiv A\cdot V(x) \pmod{N}\) for known
-      \(T\) and \(A\). If a prime \(p\) divides such a \(V(x)\), then \(N\) is congruent to a
-      square modulo \(p\) — in the standard vocabulary, \(N\) must be a
-      <strong>quadratic residue</strong> mod \(p\). The Legendre symbol packages this up:
+      The sieve generates candidate values from a polynomial whose values \(V(x)\) satisfy
+      \(T(x)^2 \equiv A\cdot V(x) \pmod{N}\). If a prime \(p\) divides such a \(V(x)\), then \(N\) is a
+      square modulo \(p\) — a <strong>quadratic residue</strong>. The
+      <a href="appendix.html#residues">Legendre symbol</a> packages this up:
     </p>
     $$
       \left(\frac{N}{p}\right) =
@@ -193,348 +208,373 @@
       \end{cases}
     $$
     <p>
-      For a random \(N\), each odd prime has a 50/50 chance. So the factor base is built by
-      generating all primes up to a bound \(B\) with the sieve of Eratosthenes and keeping only
-      those with \(\left(\frac{N}{p}\right) = 1\) — about half survive. For each survivor,
-      SIQS.NET also precomputes and stores the two <strong>modular square roots</strong>
-      \(r\) with \(r^2 \equiv N \pmod p\) (via the Tonelli–Shanks algorithm), because those roots
-      tell the siever exactly where \(p\) will strike. All of this lands in
-      <code>factor_base.txt</code>, one line per prime: index, prime, both roots, and a scaled
-      logarithm (more on that soon).
+      Each odd prime has a 50/50 chance, so the factor base is built by generating all primes up to a bound
+      \(B\) with the sieve of Eratosthenes and keeping only those with \(\left(\frac{N}{p}\right) = 1\).
+      For each survivor, SIQS.NET precomputes the two <strong>modular square roots</strong> \(r\) with
+      \(r^2 \equiv N \pmod p\) (via <a href="appendix.html#tonelli-shanks">Tonelli–Shanks</a>), because those roots tell the siever exactly where
+      \(p\) will strike. All of this lands in <code>factor_base.txt</code>: index, prime, both roots, and a
+      scaled logarithm.
     </p>
 
     <h3>The multiplier trick</h3>
     <p>
-      Here is a delightfully counter-intuitive optimization. Sometimes \(N\) itself has bad luck:
-      the small primes 3, 5, 7, 11 — the ones that divide sieve values most often — happen to be
-      non-residues, leaving the factor base with an anaemic small-prime section. The fix is to
-      factor a <em>different</em> number: pick a small square-free multiplier \(k\) and run the
-      whole algorithm on \(kN\) instead. A factor of \(kN\) that isn't a factor of \(k\) gives a
-      factor of \(N\) immediately, and a good \(k\) can make many more small primes usable.
+      A delightfully counter-intuitive optimization. Sometimes \(N\) has bad luck: the small primes 3, 5,
+      7, 11 — the ones that divide sieve values most often — happen to be non-residues, leaving an anaemic
+      small-prime section. The fix is to factor a <em>different</em> number: pick a small square-free
+      multiplier \(k\) and run the algorithm on \(kN\). A factor of \(kN\) that isn't a factor of \(k\)
+      gives a factor of \(N\) immediately, and a good \(k\) can make many more small primes usable.
     </p>
     <p>
       SIQS.NET scores each candidate \(k \in \{1, 2, 3, 5, 7, \dots, 47\}\) with the classical
-      Knuth–Schroeppel function — expected log-contribution of each small prime to sieve values,
-      minus a penalty for how much bigger \(k\) makes the numbers:
+      Knuth–Schroeppel function:
     </p>
     $$
       \mathrm{score}(k) \;=\; \sum_{\substack{p \le 100 \\ p \text{ odd prime}}} g(p, kN)
       \;+\; g_2(kN) \;-\; \tfrac{1}{2}\log k,
     $$
     <p>
-      where \(g(p, kN) = \frac{2\log p}{p-1}\) when \(kN\) is a residue mod \(p\),
-      \(\frac{\log p}{p}\) when \(p \mid k\), and \(0\) otherwise, with a separate case analysis
-      \(g_2\) for the prime 2 depending on \(kN \bmod 8\). The winner becomes the multiplier, the
-      pipeline works with \(\widetilde{N} = kN\) throughout, and only the very last GCD step
-      returns to the original \(N\).
+      where \(g(p, kN) = \frac{2\log p}{p-1}\) when \(kN\) is a residue mod \(p\), \(\frac{\log p}{p}\)
+      when \(p \mid k\), and \(0\) otherwise, with a separate case \(g_2\) for the prime 2 depending on
+      \(kN \bmod 8\). The winner becomes the multiplier, the pipeline works with
+      \(\widetilde{N} = kN\) throughout, and only the very last GCD step returns to the original \(N\).
     </p>
 
     <h3>How big should the factor base be?</h3>
     <p>
-      A larger bound \(B\) makes smoothness easier (more relations per polynomial) but demands
-      more relations in total — you need more rows than columns, and columns are primes. The
-      optimal bound grows subexponentially with \(N\); SIQS.NET uses a smooth digit-calibrated
-      formula anchored to the quantity \(L = \sqrt{\ln N \,\ln\ln N}\) (the same quantity that
-      governs the whole algorithm's runtime — see <a href="#complexity">§11</a>), tuned so that a
-      20-digit input gets a bound near a thousand and a 90-digit input gets a bound in the
-      millions. For the 90-digit class, the factor base holds roughly 90,000 primes; the tuned
-      110-digit profile pushes the bound to 40 million.
+      A larger bound \(B\) makes smoothness easier but demands more relations in total. The optimal bound
+      grows subexponentially with \(N\); SIQS.NET uses a digit-calibrated formula anchored to
+      \(L = \sqrt{\ln N \,\ln\ln N}\) (see <a href="#complexity">§11</a>), tuned so a 20-digit input gets a
+      bound near a thousand and a 90-digit input a bound in the millions. For the 90-digit class the factor
+      base holds roughly 90,000 primes; the tuned 110-digit profile pushes the bound to 40 million.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="sieve">4. The sieve: why it's fast</h2>
+    <h2 id="sieve"><span class="folio">§04</span> The sieve: why it's fast</h2>
 
     <p>
-      We need many values \(V(x)\) that are smooth over the factor base. The naive approach —
-      trial-divide every candidate by every factor-base prime — spends almost all its time
-      proving that non-smooth numbers (the overwhelming majority) are non-smooth. The sieve
-      inverts the logic: <em>instead of asking &ldquo;what divides this value?&rdquo;, ask
-      &ldquo;which values does this prime divide?&rdquo;</em> — and answer it for free with
+      We need many values \(V(x)\) that are smooth over the factor base. The naive approach — trial-divide
+      every candidate by every factor-base prime — spends almost all its time proving that non-smooth
+      numbers are non-smooth. The sieve inverts the logic: instead of asking <em>“what divides this
+      value?”</em>, ask <em>“which values does this prime divide?”</em> — and answer it for free with
       arithmetic progressions.
     </p>
 
-    <p>
-      Consider the basic quadratic-sieve polynomial \(Q(x) = (x + \lceil\sqrt{N}\rceil)^2 - N\).
-      If \(p\) divides \(Q(x)\), then \((x + \lceil\sqrt{N}\rceil)^2 \equiv N \pmod p\) — so
-      \(x + \lceil\sqrt{N}\rceil\) must be congruent to one of the two precomputed square roots
-      \(\pm r\) of \(N\) mod \(p\). In other words, the solutions form <strong>two arithmetic
-      progressions with common difference \(p\)</strong>. Once you find the first hit of each,
-      every later hit is a constant stride away. No divisions, no remainders: just
-      &ldquo;jump ahead by \(p\), mark; jump ahead by \(p\), mark.&rdquo;
-    </p>
+    <!-- ==================== SCENE: the sieve ==================== -->
+    <div class="scene" data-scene="sieve">
+      <div class="stage"><div class="stage-inner">
+        <canvas role="img" aria-label="An animated sieve: an interval of candidate cells; a factor-base prime marks its two arithmetic progressions, then the whole base accumulates log-weights, and a scan lights up the smooth survivors."></canvas>
+      </div></div>
+      <div class="steps-track">
+        <div class="beat"><div class="card"><span class="step-k">Step 1 · the interval</span>
+          <h3>An interval of candidates</h3>
+          <p>Lay out the sieve interval as an array — one slot per candidate \(x\), initialised to zero.
+            Almost none of these values will turn out to be smooth.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 2 · one prime strikes</span>
+          <h3>A prime marks its progressions</h3>
+          <p>If \(p\) divides \(V(x)\), the solutions form two arithmetic progressions with common
+            difference \(p\). Find the first hit of each, then jump ahead by \(p\) and add \(\log p\) — no
+            divisions, no remainders.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 3 · the whole base</span>
+          <h3>Every prime, once</h3>
+          <p>Walk each factor-base prime along its progressions. Each cell accumulates the logarithms of
+            the primes that divide it. A prime \(p\) touches only \(2/p\) of the slots, so the total work
+            per slot is about \(2\ln\ln B\) — effectively a small constant.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 4 · the survivors</span>
+          <h3>One scan finds the smooth ones</h3>
+          <p>A single linear pass flags every slot whose accumulated sum clears \(\log|V(x)| -
+            \varepsilon\). Only those few survivors — a tiny fraction — are handed to exact trial division.
+            The expensive certainty of division is spent only where the cheap evidence of addition says it
+            is worth it.</p></div></div>
+      </div>
+    </div>
 
     <p>
-      The marking is done with logarithms. Allocate an array over the sieve interval, one byte
-      per candidate \(x\), initialized to zero. For each factor-base prime \(p\), walk its two
-      progressions and <em>add</em> \(\log p\) (scaled to fit a byte) at each hit. A value that
-      is fully smooth will have received log-contributions summing to approximately
-      \(\log|V(x)|\) — so after all primes have been walked, a single linear scan flags every
-      position whose accumulated sum exceeds
+      The marking is done with logarithms. Allocate one byte per candidate. For each factor-base prime
+      \(p\), walk its two progressions and <em>add</em> \(\log p\) (scaled to a byte) at each hit. A fully
+      smooth value receives log-contributions summing to about \(\log|V(x)|\), so a single scan flags every
+      position whose sum exceeds
     </p>
     $$ \log|V(x)| \;-\; \varepsilon, $$
     <p>
-      where \(\varepsilon\) is a configured <em>error margin</em> that absorbs rounding, skipped
-      tiny primes, and the possibility of one moderate leftover factor (which §6 will turn into
-      a feature). Only the flagged survivors — a tiny fraction — are handed to exact trial
-      division, which reconstructs the full factorization, confirms smoothness, and emits the
-      relation. The expensive certainty of division is spent only where the cheap evidence of
-      addition says it's worth it.
+      where \(\varepsilon\) is a configured <em>error margin</em> absorbing rounding, skipped tiny primes,
+      and the possibility of one moderate leftover factor (which §6 turns into a feature).
     </p>
 
-    <div class="defbox">
+    <div class="defbox reveal">
       <div class="deftitle">Why this wins</div>
       <p>
-        A prime \(p\) touches only \(2/p\) of all sieve positions, so the total work per position,
-        summed over the whole factor base, is \(\sum_p 2/p \approx 2\ln\ln B\) — effectively a
-        small constant. The sieve examines millions of candidates for the amortized cost of a few
-        byte-additions each. This one loop is where a factorization spends the vast majority of
-        its wall-clock time, and it is the loop that SIQS.NET's SIMD paths, cache-sized blocks,
-        and distributed workers all exist to feed.
+        The sieve examines millions of candidates for the amortized cost of a few byte-additions each. This
+        one loop is where a factorization spends the vast majority of its wall-clock time — and it is the
+        loop that SIQS.NET's SIMD paths, cache-sized blocks, and distributed workers all exist to feed.
       </p>
     </div>
 
     <!-- ============================================================ -->
-    <h2 id="siqs">5. Self-initialization: many polynomials, cheaply</h2>
+    <h2 id="siqs"><span class="folio">§05</span> Self-initialization: many polynomials, cheaply</h2>
 
     <p>
-      The single polynomial \(Q(x)\) has a weakness: its values grow. Near \(x = 0\),
-      \(Q(x) \approx 2x\sqrt{N}\) is comparatively small and pleasantly likely to be smooth; a
-      million steps out, the values are a million times larger and the smoothness probability has
-      collapsed. Sieving one polynomial forever means grinding an ever-drier quarry.
+      The single polynomial \(Q(x) = (x + \lceil\sqrt{N}\rceil)^2 - N\) has a weakness: its values grow.
+      Near \(x = 0\) they are small and pleasantly likely to be smooth; a million steps out they are a
+      million times larger and the smoothness probability has collapsed. Sieving one polynomial forever
+      means grinding an ever-drier quarry.
     </p>
 
     <p>
-      The fix (Montgomery's, refined by Alford–Pomerance into &ldquo;self-initialization&rdquo;)
-      is to use <em>many</em> polynomials, each sieved only over a short interval
-      \([-M, M]\) where its values stay small. SIQS.NET uses the general quadratic family
+      The fix (Montgomery's, refined by Alford–Pomerance into “self-initialization”) is to use <em>many</em>
+      polynomials, each sieved only over a short interval \([-M, M]\) where its values stay small.
+      SIQS.NET uses the general quadratic family
     </p>
     $$ V(x) = A x^2 + 2Bx + C, \qquad T(x) = Ax + B, \qquad C = \frac{B^2 - \widetilde{N}}{A}, $$
     <p>
-      with coefficients engineered so that \(B^2 \equiv \widetilde{N} \pmod{A}\) (making \(C\) an
-      exact integer). A one-line calculation then gives the congruence that makes relations
-      possible:
+      with coefficients engineered so that \(B^2 \equiv \widetilde{N} \pmod{A}\). A one-line calculation
+      then gives the congruence that makes relations possible:
     </p>
     $$ T(x)^2 = (Ax+B)^2 = A\,V(x) + \widetilde N \;\equiv\; A \cdot V(x) \pmod{\widetilde{N}}. $$
     <p>
-      So each smooth value of \(A \cdot V(x)\) yields a relation with the known value
-      \(T(x)\) on the square side — and since we choose \(A\) ourselves as a product of
-      factor-base primes, its factorization contributes known exponents for free.
+      Each smooth value of \(A \cdot V(x)\) yields a relation with the known value \(T(x)\) on the square
+      side — and since we choose \(A\) ourselves as a product of factor-base primes, its factorization
+      contributes known exponents for free.
     </p>
 
     <h3>Choosing A</h3>
     <p>
-      Two constraints shape \(A\). First, magnitude: over \([-M, M]\) the polynomial's values are
-      minimized in the worst case when
-    </p>
-    $$ A \approx \frac{\sqrt{2\widetilde{N}}}{M}, $$
-    <p>
-      which balances \(|V(\pm M)|\) against \(|V(0)|\) so the whole interval sieves well.
-      Second, structure: \(A\) must be a product of \(s\) distinct odd factor-base primes
-      \(q_1 \cdots q_s\) (with \(s\) between 3 and 10 depending on the size of \(N\)) — because
-      that structure is exactly what makes many \(B\) values available. SIQS.NET builds a window
-      of factor-base primes near the ideal size \(A^{1/s}\), scores each \(s\)-subset by
-      \(\bigl|\log A - \log A_{\text{target}}\bigr|\), and consumes candidates in deterministic
-      best-first order.
+      Two constraints shape \(A\). First, magnitude: over \([-M, M]\) the values are minimized in the worst
+      case when \(A \approx \frac{\sqrt{2\widetilde{N}}}{M}\), which balances \(|V(\pm M)|\) against
+      \(|V(0)|\). Second, structure: \(A\) must be a product of \(s\) distinct odd factor-base primes
+      \(q_1 \cdots q_s\) (with \(s\) between 3 and 10) — because that structure is exactly what makes many
+      \(B\) values available. SIQS.NET builds a window of primes near \(A^{1/s}\), scores each subset by
+      \(\bigl|\log A - \log A_{\text{target}}\bigr|\), and consumes candidates in deterministic best-first
+      order.
     </p>
 
     <h3>One A, a family of Bs — the self-initializing part</h3>
     <p>
-      Fix \(A = q_1 q_2 \cdots q_s\). We need \(B\) with \(B^2 \equiv \widetilde{N} \pmod A\).
-      By the Chinese Remainder Theorem it suffices to satisfy the congruence modulo each
-      \(q_i\) separately — and each \(q_i\), being a factor-base prime, already has its two
-      stored square roots of \(\widetilde N\). Build one basis term per prime:
+      Fix \(A = q_1 q_2 \cdots q_s\). We need \(B\) with \(B^2 \equiv \widetilde{N} \pmod A\). By the
+      <a href="appendix.html#crt">Chinese Remainder Theorem</a> it suffices to satisfy the congruence modulo each \(q_i\) separately — and
+      each \(q_i\) already has its two stored square roots. Build one basis term per prime:
     </p>
     $$
       \gamma_i \;=\; r_i \cdot \Bigl(\tfrac{A}{q_i}\Bigr)^{-1} \bmod q_i,
       \qquad
       B_i \;=\; \frac{A}{q_i}\,\gamma_i,
     $$
-    <p>
-      where \(r_i\) is the stored root. Then <em>every</em> sign pattern
-      \(\varepsilon \in \{\pm 1\}^s\) gives a valid coefficient
-    </p>
+    <p>then <em>every</em> sign pattern \(\varepsilon \in \{\pm 1\}^s\) gives a valid coefficient</p>
     $$ B \;=\; \sum_{i=1}^{s} \varepsilon_i B_i \pmod{A}, $$
     <p>
-      because squaring mod \(q_i\) kills every term except \((\pm B_i)^2 \equiv \widetilde N\).
-      One choice of \(A\) therefore yields \(2^s\) polynomials — of which half are kept:
-      \(\varepsilon\) and \(-\varepsilon\) produce mirror-image polynomials whose relations are
-      arithmetically dependent (over the symmetric interval they generate guaranteed-trivial
-      square roots), so SIQS.NET enumerates exactly one representative of each pair,
-      \(2^{s-1}\) polynomials per \(A\), using the first half of a binary-reflected Gray code.
+      because squaring mod \(q_i\) kills every term except \((\pm B_i)^2 \equiv \widetilde N\). One \(A\)
+      therefore yields \(2^s\) polynomials — of which half are kept, since \(\varepsilon\) and
+      \(-\varepsilon\) are mirror images. SIQS.NET enumerates \(2^{s-1}\) per \(A\) using the first half of
+      a <a href="appendix.html#gray">binary-reflected Gray code</a>.
     </p>
 
     <p>
-      The Gray code is the punchline, not a detail. Successive sign patterns differ in
-      <em>one</em> bit, so stepping from one polynomial to the next changes \(B\) by
-      \(\pm 2B_v\) for a single index \(v\) — and the sieve's starting positions for every prime
-      \(p\) shift by a <em>precomputed</em> per-prime constant:
+      The Gray code is the punchline. Successive patterns differ in <em>one</em> bit, so stepping from one
+      polynomial to the next changes \(B\) by \(\pm 2B_v\) for a single index \(v\) — and the sieve's
+      starting positions shift by a <em>precomputed</em> per-prime constant:
     </p>
     $$ x_{1,2} \;=\; (r_{1,2} - B)\cdot A^{-1} \bmod p
        \qquad\leadsto\qquad
        \Delta_{v,p} \;=\; 2 B_v A^{-1} \bmod p. $$
     <p>
-      Initializing a polynomial from scratch costs a modular inverse per factor-base prime —
-      expensive when repeated tens of thousands of times. Switching within a family costs one
-      addition per prime. That is the entire meaning of <em>self-initializing</em>: the family
-      amortizes its setup so thoroughly that polynomial switching becomes almost free, and the
-      siever can afford to keep every interval short and every value small.
+      Initializing a polynomial from scratch costs a modular inverse per prime; switching within a family
+      costs one addition per prime. That is the entire meaning of <em>self-initializing</em>: the family
+      amortizes its setup so thoroughly that polynomial switching becomes almost free.
     </p>
 
-    <div class="defbox">
+    <div class="defbox reveal">
       <div class="deftitle">Recap of one sieving cycle</div>
       <p>
-        Pick the next-best \(A\) → compute the \(B_i\) basis and per-prime deltas (once per
-        family) → for each of \(2^{s-1}\) Gray-coded \(B\)s: shift sieve roots, add logs over
-        \([-M,M]\), scan for threshold survivors, trial-divide survivors, fold in \(A\)'s known
-        exponents, emit full relations and partials. Repeat until enough relations exist.
+        Pick the next-best \(A\) → compute the \(B_i\) basis and per-prime deltas (once per family) → for
+        each of \(2^{s-1}\) Gray-coded \(B\)s: shift sieve roots, add logs over \([-M,M]\), scan for
+        threshold survivors, trial-divide survivors, fold in \(A\)'s known exponents, emit full relations
+        and partials. Repeat until enough relations exist.
       </p>
     </div>
 
     <!-- ============================================================ -->
-    <h2 id="largeprimes">6. Large primes: profiting from near-misses</h2>
+    <h2 id="largeprimes"><span class="folio">§06</span> Large primes: profiting from near-misses</h2>
 
     <p>
-      Most threshold survivors fail exact trial division not by much — they factor over the base
-      except for <em>one</em> leftover prime a bit beyond the bound. Discarding these is
-      wasteful, and the sieve threshold's error margin was chosen deliberately so they surface.
-      A survivor whose cofactor is a single prime \(\ell\) with
-      \(B < \ell \le \ell_{\max}\) (typically \(\ell_{\max}\) is a few hundred times \(B\)) is
-      recorded as a <strong>partial relation</strong>: a relation with one extra prime attached.
+      Most threshold survivors fail exact trial division not by much — they factor over the base except for
+      <em>one</em> leftover prime a bit beyond the bound. Discarding these is wasteful, and the error margin
+      was chosen deliberately so they surface. A survivor whose cofactor is a single prime \(\ell\) with
+      \(B < \ell \le \ell_{\max}\) is recorded as a <strong>partial relation</strong>: a relation with one
+      extra prime attached.
+    </p>
+
+    <!-- ==================== SCENE: large primes ==================== -->
+    <div class="scene" data-scene="graph">
+      <div class="stage"><div class="stage-inner">
+        <canvas role="img" aria-label="A graph whose vertices are large primes. Partial relations are edges; two partials sharing a prime pair up, two-large-prime relations connect prime vertices, and a cycle in the graph highlights to show all large primes cancelling."></canvas>
+      </div></div>
+      <div class="steps-track">
+        <div class="beat"><div class="card"><span class="step-k">Step 1 · a near-miss</span>
+          <h3>One leftover prime</h3>
+          <p>A partial is a relation with a single large prime \(\ell\) attached. On its own it is useless:
+            \(\ell\) appears to an odd power and can never cancel.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 2 · pairs cancel</span>
+          <h3>Two partials, one shared prime</h3>
+          <p>Multiply two partials that share the same \(\ell\): now \(\ell\) appears squared, contributes
+            even parity, and vanishes from the matrix. The pair behaves exactly like one full relation — and
+            by the birthday paradox, collisions arrive far more often than intuition suggests.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 3 · two large primes</span>
+          <h3>Cofactors become edges</h3>
+          <p>SIQS.NET pushes further for large targets: 2LP relations, where the leftover splits into
+            \(\ell_1\ell_2\) via SQUFOF or Pollard-rho. Build a graph whose vertices are large primes and
+            whose edges are partials.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 4 · a cycle cancels</span>
+          <h3>Any cycle is a relation</h3>
+          <p>A cycle touches every large prime an even number of times — multiply the partials along it and
+            all the large primes cancel. Filtering hunts these cycles with a union-find forest, and for
+            90-digit targets 2LP mode meaningfully extends the implementation's reach.</p></div></div>
+      </div>
+    </div>
+
+    <p>
+      One partial is useless; two partials sharing the same \(\ell\) can be multiplied so \(\ell\) appears
+      squared, contributes even parity, and vanishes from the matrix. In practice partials contribute a
+      large share of the final matrix at nearly no extra sieving cost.
     </p>
 
     <p>
-      One partial is useless — its \(\ell\) appears to an odd power. But <em>two</em> partials
-      sharing the same \(\ell\) can be multiplied: \(\ell\) then appears squared, contributes
-      even parity, vanishes from the matrix, and the pair behaves exactly like one full
-      relation. By the birthday paradox, collisions among large primes arrive far more often
-      than intuition suggests, and in practice partials contribute a large share of the final
-      matrix at nearly no extra sieving cost.
-    </p>
-
-    <p>
-      SIQS.NET pushes one step further for large targets: <strong>two-large-prime (2LP)
-      relations</strong>, where the leftover cofactor is a product of two primes
-      \(\ell_1 \ell_2\), split by the SQUFOF or Pollard-rho algorithm. Combining these is no
-      longer simple pairing — it becomes a graph problem. Build a graph whose vertices are large
-      primes (plus a special vertex &ldquo;1&rdquo; for single-prime partials): every partial is
-      an edge between its large primes. Any <strong>cycle</strong> in this graph is a set of
-      partials in which every large prime is touched an even number of times — multiply the
-      partials along the cycle and all the large primes cancel. The filtering phase hunts these
-      cycles with a union-find forest. For 90-digit-class targets, 2LP mode meaningfully extends
-      the practical reach of the implementation.
+      For a <strong>two-large-prime (2LP)</strong> relation the leftover cofactor is a product
+      \(\ell_1 \ell_2\), split by SQUFOF or Pollard-rho. Combining these becomes a graph problem: vertices
+      are large primes (plus a special vertex “1” for single-prime partials), and every partial is an edge.
+      Any <strong>cycle</strong> is a set of partials in which every large prime is touched an even number
+      of times — multiply along the cycle and the large primes cancel.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="filtering">7. Filtering: preparing the matrix</h2>
+    <h2 id="filtering"><span class="folio">§07</span> Filtering: preparing the matrix</h2>
 
-    <p>
-      Sieving ends with hundreds of thousands of raw relations in
-      <code>relations_*.txt</code> and <code>partials_*.txt</code>. Filtering turns them into the
-      smallest clean matrix that still guarantees dependencies:
-    </p>
+    <p>Sieving ends with hundreds of thousands of raw relations. Filtering turns them into the smallest clean matrix that still guarantees dependencies:</p>
     <ul>
-      <li><strong>Deduplicate.</strong> Parallel workers and overlapping polynomials can find the
-        same relation twice; duplicates create fake dependencies that factor nothing.</li>
-      <li><strong>Combine partials.</strong> Find large-prime cycles (§6) and merge each into a
-        synthetic <code>combined_partial</code> relation, recording provenance and the cancelled
-        primes — the square-root phase will need them.</li>
-      <li><strong>Prune singletons.</strong> A prime that appears in exactly one relation can
-        never cancel; that relation is dead weight. Remove it — which may create new singletons —
-        and iterate to a fixed point. This typically shrinks the matrix dramatically.</li>
-      <li><strong>Trim the surplus.</strong> Keep only modestly more rows than columns (each
-        excess row guarantees one more dependency; a few dozen suffice), preferring to discard
-        the heaviest rows to keep the matrix sparse.</li>
+      <li><strong>Deduplicate.</strong> Parallel workers and overlapping polynomials can find the same relation twice; duplicates create fake dependencies that factor nothing.</li>
+      <li><strong>Combine partials.</strong> Find large-prime cycles (§6) and merge each into a synthetic <code>combined_partial</code> relation, recording the cancelled primes — the square-root phase will need them.</li>
+      <li><strong>Prune singletons.</strong> A prime appearing in exactly one relation can never cancel; that relation is dead weight. Remove it — which may create new singletons — and iterate to a fixed point.</li>
+      <li><strong>Trim the surplus.</strong> Keep only modestly more rows than columns (a few dozen excess rows suffice), preferring to discard the heaviest rows to keep the matrix sparse.</li>
     </ul>
 
     <p>
-      The output is a sparse 0/1 matrix — <code>filtered_matrix.txt</code> lists, for each
-      relation, only the indexes of its odd-exponent columns (column 0 is a virtual sign column
-      tracking negative values, since \(V(x) < 0\) happens on half the interval and \(-1\) must
-      cancel like any prime). Alongside it, <code>relations_filtered.txt</code> preserves the
-      full arithmetic — exponents, \(t\)-values, large-prime cofactors — that the parity-only
+      The output is a sparse 0/1 matrix — <code>filtered_matrix.txt</code> lists, for each relation, only
+      the indexes of its odd-exponent columns (column 0 is a virtual sign column tracking negative values).
+      Alongside it, <code>relations_filtered.txt</code> preserves the full arithmetic that the parity-only
       matrix deliberately forgets.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="linalg">8. Linear algebra over GF(2)</h2>
+    <h2 id="linalg"><span class="folio">§08</span> Linear algebra over GF(2)</h2>
 
     <p>
-      Now find a non-empty set of rows that XOR to zero. For a 90-digit factorization the matrix
-      has on the order of \(10^5\) rows and columns; Gaussian elimination would work in
-      principle, but it suffers <em>fill-in</em> — the matrix starts a few dozen nonzeros per row
-      and elimination steadily densifies it until it no longer fits in memory, with
-      \(O(n^3)\) bit-operations on top.
+      Now find a non-empty set of rows that XOR to zero. For a 90-digit factorization the matrix has on the
+      order of \(10^5\) rows and columns; Gaussian elimination would work in principle but suffers
+      <em>fill-in</em> — it densifies the matrix until it no longer fits in memory, with \(O(n^3)\)
+      bit-operations on top.
     </p>
 
-    <p>
-      SIQS.NET instead uses <strong>Block Lanczos</strong> (Montgomery, 1995), the standard
-      workhorse for exactly this job. Two ideas power it:
-    </p>
+    <!-- ==================== SCENE: the matrix ==================== -->
+    <div class="scene" data-scene="matrix">
+      <div class="stage"><div class="stage-inner">
+        <canvas role="img" aria-label="A GF(2) matrix of 0/1 bits. A subset of rows is highlighted, then XOR-ed column by column; every column sums to zero, so the selected relations multiply to a perfect square."></canvas>
+      </div></div>
+      <div class="steps-track">
+        <div class="beat"><div class="card"><span class="step-k">Step 1 · parity vectors</span>
+          <h3>Each relation is a row of bits</h3>
+          <p>Reduce every exponent mod 2. Each relation becomes a 0/1 vector over GF(2) — one column per
+            prime, a bit set where that prime's exponent is odd.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 2 · a dependency</span>
+          <h3>Find a subset that should cancel</h3>
+          <p>With more rows than columns, a linear dependency is guaranteed. Block Lanczos hunts one:
+            a non-empty subset of rows (highlighted) whose bits sum away.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 3 · XOR the rows</span>
+          <h3>Add them, column by column</h3>
+          <p>Over GF(2), addition is XOR. Combine the selected rows: every prime shared by an even number of
+            them cancels in pairs.</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 4 · all-even</span>
+          <h3>Every column is zero</h3>
+          <p>The combined row is all zeros — every prime's total exponent is even, so the product of those
+            relations is a perfect square. That is one candidate congruence \(X^2 \equiv Y^2\).</p></div></div>
+      </div>
+    </div>
+
+    <p>SIQS.NET instead uses <a href="appendix.html#block-lanczos"><strong>Block Lanczos</strong></a> (Montgomery, 1995). Two ideas power it:</p>
     <ul>
-      <li><strong>The matrix is never modified.</strong> Lanczos-type methods touch \(M\) only
-        through matrix–vector products \(v \mapsto Mv\) and \(v \mapsto M^{\mathsf T}v\), which
-        cost one XOR per stored nonzero. Sparsity is preserved forever; memory stays flat.</li>
-      <li><strong>Work on 64 vectors at once.</strong> Over \(\mathrm{GF}(2)\), a machine word
-        holds 64 independent vector coordinates, and one hardware <code>XOR</code> processes all
-        of them. The &ldquo;block&rdquo; variant makes the word width work as a
-        64-fold parallel speedup — and has the pleasant side effect of emitting up to 64
-        nullspace vectors in a single run.</li>
+      <li><strong>The matrix is never modified.</strong> Lanczos-type methods touch \(M\) only through
+        products \(v \mapsto Mv\) and \(v \mapsto M^{\mathsf T}v\), one XOR per stored nonzero. Sparsity is
+        preserved forever; memory stays flat.</li>
+      <li><strong>Work on 64 vectors at once.</strong> Over \(\mathrm{GF}(2)\), a machine word holds 64
+        independent coordinates, and one hardware <code>XOR</code> processes all of them — a 64-fold
+        speedup that also emits up to 64 nullspace vectors per run.</li>
     </ul>
 
     <p>
-      The iteration builds an orthogonal-like sequence of block subspaces and converges after
-      roughly \(n/64\) matrix passes, giving total cost \(O(n \cdot w)\) XOR-word operations
-      for a matrix with \(w\) nonzeros per row — a completely different regime from elimination.
-      Each recovered nullspace vector selects a subset of filtered relations whose parities all
-      cancel: <code>dependencies.txt</code> lists them, typically several dozen per run. Each
-      one is an independent lottery ticket for the final phase.
+      The iteration converges after roughly \(n/64\) matrix passes, for a total cost \(O(n \cdot w)\)
+      XOR-word operations on a matrix with \(w\) nonzeros per row. Each recovered nullspace vector selects a
+      subset of filtered relations whose parities all cancel: <code>dependencies.txt</code> lists them,
+      typically several dozen per run. Each is an independent lottery ticket for the final phase.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="sqrt">9. The square root: extracting the factors</h2>
+    <h2 id="sqrt"><span class="folio">§09</span> The square root: extracting the factors</h2>
 
-    <p>
-      A dependency asserts: over this set \(S\) of relations, every prime's total exponent is
-      even. Cash it in:
-    </p>
+    <p>A dependency asserts: over this set \(S\) of relations, every prime's total exponent is even. Cash it in:</p>
     $$
       X \;=\; \prod_{i \in S} t_i \bmod N,
       \qquad
       Y \;=\; \prod_{j} p_j^{\,E_j / 2} \cdot \prod_{\text{cycles}} \ell \pmod{N},
     $$
     <p>
-      where \(t_i\) is each relation's stored square-side value, \(E_j\) is the (verified-even)
-      total exponent of factor-base prime \(p_j\), and each combined partial contributes one copy
-      of its cancelled large prime \(\ell\) — the matrix forgot those primes, but arithmetic
-      doesn't. By construction \(X^2 \equiv Y^2 \pmod{\widetilde N}\), hence also mod \(N\), and
+      where \(t_i\) is each relation's stored square-side value, \(E_j\) the verified-even total exponent of
+      prime \(p_j\), and each combined partial contributes one copy of its cancelled large prime \(\ell\).
+      By construction \(X^2 \equiv Y^2 \pmod{\widetilde N}\), hence also mod \(N\).
     </p>
+
+    <!-- ==================== SCENE: the gcd ==================== -->
+    <div class="scene" data-scene="gcd">
+      <div class="stage"><div class="stage-inner">
+        <canvas role="img" aria-label="The congruence of squares becomes two GCDs against N, and a non-trivial GCD splits N into the two prime factors p and q."></canvas>
+      </div></div>
+      <div class="steps-track">
+        <div class="beat"><div class="card"><span class="step-k">Step 1 · a congruence of squares</span>
+          <h3>X² ≡ Y² (mod N)</h3>
+          <p>Reconstruct \(X\) from the stored square-side values and \(Y\) from the halved exponents. The
+            dependency guarantees the two squares agree modulo \(N\).</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 2 · two GCDs</span>
+          <h3>gcd(X − Y, N) and gcd(X + Y, N)</h3>
+          <p>Computed against the <em>original</em> \(N\) — the multiplier was scaffolding, dismantled here.
+            A dependency fails only when \(X \equiv \pm Y\); with sixty-odd banked, the chance all fail is
+            below \(2^{-60}\).</p></div></div>
+        <div class="beat"><div class="card"><span class="step-k">Step 3 · N splits</span>
+          <h3>A non-trivial GCD is a factor</h3>
+          <p>The first or second attempt splits \(N\). The factors are verified by multiplication and
+            <code>factors.txt</code> is written.</p></div></div>
+      </div>
+    </div>
+
+    <p>The two GCDs</p>
     $$ \gcd(|X - Y|,\, N), \qquad \gcd(X + Y,\, N) $$
     <p>
-      are computed against the <em>original</em> \(N\) — the multiplier was scaffolding, and it
-      is dismantled here. Each dependency independently succeeds with probability at least
-      \(1/2\) (it fails only when \(X \equiv \pm Y\), the &ldquo;trivial&rdquo; outcome); with
-      sixty-odd dependencies banked, the chance that all of them fail is smaller than
-      \(2^{-60}\). In practice, the first or second attempt splits \(N\), the factors are
-      verified by multiplication, and <code>factors.txt</code> is written.
+      are computed against the <em>original</em> \(N\). Each dependency independently succeeds with
+      probability at least \(1/2\); with sixty-odd dependencies banked, the chance that all fail is smaller
+      than \(2^{-60}\). In practice the first or second attempt splits \(N\), the factors are verified by
+      multiplication, and <code>factors.txt</code> is written.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="worked">10. A worked run, end to end</h2>
+    <h2 id="worked"><span class="folio">§10</span> A worked run, end to end</h2>
 
-    <p>
-      SIQS.NET's test suite pins a complete generated artifact set for the 29-digit target
-    </p>
+    <p>SIQS.NET's test suite pins a complete generated artifact set for the 29-digit target</p>
     $$ N = 83{,}814{,}966{,}476{,}324{,}578{,}806{,}392{,}209{,}603, $$
     <p>with every cross-phase file checked against the contracts described above. The run:</p>
 
-    <div class="table-scroll">
+    <div class="table-scroll reveal">
       <table>
         <thead><tr><th>Stage</th><th>What happened</th></tr></thead>
         <tbody>
           <tr><td>Multiplier</td><td>\(k = 3\) selected; all later phases work on \(\widetilde N = 3N\).</td></tr>
           <tr><td>Factor base</td><td>Bound 4291 → <strong>302</strong> primes with stored roots and logs.</td></tr>
-          <tr><td>Sieving</td><td><strong>708</strong> full relations and <strong>2555</strong> single-large-prime partials collected from <strong>16</strong> polynomials.</td></tr>
-          <tr><td>Filtering</td><td>Partial pairing yields <strong>760</strong> combined relations; after singleton pruning and trimming, a <strong>283 × 267</strong> sparse matrix remains (from an initial 1468 × 303).</td></tr>
+          <tr><td>Sieving</td><td><strong>708</strong> full relations and <strong>2555</strong> single-large-prime partials from <strong>16</strong> polynomials.</td></tr>
+          <tr><td>Filtering</td><td>Partial pairing yields <strong>760</strong> combined relations; after pruning and trimming, a <strong>283 × 267</strong> sparse matrix remains (from an initial 1468 × 303).</td></tr>
           <tr><td>Linear algebra</td><td>Block Lanczos finds <strong>264</strong> pivots and emits <strong>63</strong> dependencies.</td></tr>
           <tr><td>Square root</td><td>2 dependencies attempted; the successful one combines 143 relations.</td></tr>
         </tbody>
@@ -545,40 +585,30 @@
     $$ \gcd(|X-Y|,\,N) = 678{,}901{,}234{,}567{,}937, \qquad
        \gcd(X+Y,\,N) = 123{,}456{,}789{,}012{,}419, $$
     <p>
-      and indeed \(123456789012419 \times 678901234567937 = N\). Note the shape of the economics
-      even at this toy scale: 2555 near-misses were collected almost free and condensed into 760
-      extra matrix rows — the large-prime variation more than doubled the effective yield of the
-      sieve.
+      and indeed \(123456789012419 \times 678901234567937 = N\). Note the economics even at this toy scale:
+      2555 near-misses were collected almost free and condensed into 760 extra matrix rows — the
+      large-prime variation more than doubled the effective yield of the sieve.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="complexity">11. Complexity and parameter choices</h2>
+    <h2 id="complexity"><span class="folio">§11</span> Complexity and parameter choices</h2>
 
     <p>
-      Every tension in the algorithm — bigger factor base versus more required relations, longer
-      intervals versus larger values, more polynomials versus more setup — resolves into one
-      quantity. Under standard heuristics on the density of smooth numbers, the optimized cost
-      of the quadratic sieve is
+      Every tension in the algorithm resolves into one quantity. Under standard heuristics on the density of
+      smooth numbers, the optimized cost of the quadratic sieve is
     </p>
-    $$
-      L(N) \;=\; \exp\!\Bigl( (1 + o(1)) \sqrt{\ln N \,\ln \ln N} \Bigr),
-    $$
+    $$ L(N) \;=\; \exp\!\Bigl( (1 + o(1)) \sqrt{\ln N \,\ln \ln N} \Bigr), $$
     <p>
-      with the optimal factor-base bound near \(L(N)^{1/2}\). This is
-      <em>subexponential</em>: dramatically better than trial division's
-      \(\exp\bigl(\tfrac12\ln N\bigr)\), yet still growing fast enough that each additional
-      10 digits of \(N\) roughly quadruples the work at these sizes. (The number field sieve
-      improves the exponent to \((\ln N)^{1/3}(\ln\ln N)^{2/3}\), which is why it wins beyond
-      ~100 digits — at the price of vastly more machinery.)
+      with the optimal factor-base bound near \(L(N)^{1/2}\). This is <em>subexponential</em>: dramatically
+      better than trial division's \(\exp\bigl(\tfrac12\ln N\bigr)\), yet still growing fast enough that
+      each additional 10 digits roughly quadruples the work at these sizes. (The number field sieve improves
+      the exponent to \((\ln N)^{1/3}(\ln\ln N)^{2/3}\), which is why it wins beyond ~100 digits — at the
+      price of vastly more machinery.)
     </p>
 
-    <p>
-      In practice, asymptotics only set the shape; constants are found by measurement. SIQS.NET
-      derives every default from the digit count \(D\) of the target — each calibrated by trial
-      sieving on real targets rather than theory alone:
-    </p>
+    <p>SIQS.NET derives every default from the digit count \(D\) of the target, each calibrated by trial sieving on real targets:</p>
 
-    <div class="table-scroll">
+    <div class="table-scroll reveal">
       <table>
         <thead><tr><th>Parameter</th><th>Role</th><th>Scale of the defaults</th></tr></thead>
         <tbody>
@@ -593,45 +623,32 @@
     </div>
 
     <p>
-      Every one of these is overridable from the <code>qs</code> command line, which is precisely
-      how the defaults were found: run <code>--trial-sieve-percent</code> samples across a
-      parameter sweep, compare raw relation throughput, commit the winner.
+      Every one of these is overridable from the <code>qs</code> command line, which is precisely how the
+      defaults were found: run <code>--trial-sieve-percent</code> samples across a parameter sweep, compare
+      raw relation throughput, commit the winner.
     </p>
 
     <!-- ============================================================ -->
-    <h2 id="engineering">12. Where the engineering lives</h2>
+    <h2 id="engineering"><span class="folio">§12</span> Where the engineering lives</h2>
 
-    <p>
-      The mathematics above fits on a napkin; making it fast is where the implementation earns
-      its keep. A few highlights of what you'll find in the source:
-    </p>
+    <p>The mathematics above fits on a napkin; making it fast is where the implementation earns its keep. A few highlights of what you'll find in the source:</p>
     <ul>
-      <li><strong>Cache-blocked, SIMD-filled sieving.</strong> The interval is processed in
-        cache-sized blocks (256 KiB–1 MiB); small primes use AVX2/scalar direct fills, while
-        primes larger than a block — which hit each block at most once per root — are routed
-        through per-block <em>bucket</em> hit lists, and a middle band is rediscovered by
-        <em>resieving</em>, so the per-candidate divisibility gate runs only over genuinely
-        small primes.</li>
-      <li><strong>Parallel and distributed sieving.</strong> Polynomial families are independent,
-        so they parallelize across cores trivially — and across machines: the Overlord
-        coordinator leases disjoint family ranges to volunteer clients, which rebuild the factor
-        base themselves and verify the job before contributing (see the
-        <a href="index.html#distributed">distributed overview</a>).</li>
-      <li><strong>Deterministic replay.</strong> Every phase is deterministic given its inputs;
-        with <code>--parallelism 1</code>, whole runs are byte-for-byte reproducible — the
-        property the test suite's pinned end-to-end fixture is built on.</li>
-      <li><strong>Text artifacts everywhere.</strong> Each phase's output is a documented UTF-8
-        file with a versioned header. Debugging a factorization is reading files, not attaching
-        debuggers.</li>
+      <li><strong>Cache-blocked, SIMD-filled sieving.</strong> The interval is processed in cache-sized
+        blocks (256 KiB–1 MiB); small primes use AVX2/scalar direct fills, larger primes are routed through
+        per-block <em>bucket</em> hit lists, and a middle band is rediscovered by <em>resieving</em>.</li>
+      <li><strong>Parallel and distributed sieving.</strong> Polynomial families are independent, so they
+        parallelize across cores and across machines: the Overlord leases disjoint family ranges to clients
+        that rebuild the factor base themselves and verify the job before contributing.</li>
+      <li><strong>Deterministic replay.</strong> Every phase is deterministic given its inputs; with
+        <code>--parallelism 1</code>, whole runs are byte-for-byte reproducible — the property the test
+        suite's pinned end-to-end fixture is built on.</li>
+      <li><strong>Text artifacts everywhere.</strong> Each phase's output is a documented UTF-8 file with a
+        versioned header. Debugging a factorization is reading files, not attaching debuggers.</li>
       <li><strong>Resumability.</strong> A run's workspace records enough state that
-        <code>qs --resume &lt;run-dir&gt;</code> can pick up an interrupted job — including
-        re-validating that any supplied parameters match the stored ones.</li>
+        <code>qs --resume &lt;run-dir&gt;</code> can pick up an interrupted job.</li>
     </ul>
 
-    <p>
-      The best way to make all of this concrete is to watch it happen:
-      factor something, then open the run directory and read the artifacts alongside this page.
-    </p>
+    <p>The best way to make all of this concrete is to watch it happen: factor something, then open the run directory and read the artifacts alongside this page.</p>
 
     <div class="article-nav">
       <a href="index.html">&larr; Back to the overview</a>
@@ -642,15 +659,19 @@
   <footer class="site">
     <div class="wrap footer-inner">
       <div>
-        <strong>SIQS.NET</strong> — a quadratic sieve workbench. Happy sieving.
+        <div class="brand"><span class="mark">√</span><span>SIQS<span class="dot">.NET</span></span></div>
+        <p class="footer-note">A quadratic sieve workbench, in modern C# and .NET. Happy sieving.</p>
       </div>
-      <div>
-        <a href="https://github.com/JesHansen/siqs.net">GitHub</a> ·
-        <a href="index.html">Home</a> ·
+      <div class="footer-links">
+        <a href="https://github.com/JesHansen/siqs.net">GitHub</a>
+        <a href="appendix.html">Appendix</a>
+        <a href="index.html">Home</a>
         <a href="https://siqs.net/">siqs.net</a>
       </div>
     </div>
   </footer>
 
+  <script src="js/site.js" defer></script>
+  <script src="js/scrolly.js" defer></script>
 </body>
 </html>

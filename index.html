@@ -6,7 +6,6 @@
   <title>SIQS.NET — a quadratic sieve workbench</title>
   <meta name="description" content="SIQS.NET is an open-source implementation of the self-initializing quadratic sieve in modern C# and .NET — a factorization workbench and an explorable implementation of a classic integer-factorization algorithm." />
 
-  <!-- Open Graph / social -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="SIQS.NET — a quadratic sieve workbench" />
   <meta property="og:description" content="An open-source self-initializing quadratic sieve in modern C# and .NET. Factor numbers. Understand how." />
@@ -14,329 +13,360 @@
   <meta name="twitter:card" content="summary" />
 
   <link rel="canonical" href="https://siqs.net/" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='monospace'>&#8730;</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='serif' font-style='italic'>&#8730;</text></svg>" />
+  <link rel="preload" href="fonts/ebgaramond-600-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/inter-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
   <link rel="stylesheet" href="css/style.css" />
+  <noscript><style>.reveal,.reveal-line,.pipeline::before,.rung .fill{opacity:1!important;transform:none!important}</style></noscript>
+  <script>
+    // Set theme before first paint (default: dark) to avoid a flash.
+    (function () {
+      try {
+        var t = localStorage.getItem("siqs-theme");
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
+    })();
+  </script>
 </head>
 <body>
 
   <header class="site">
-    <div class="wrap nav">
-      <div class="brand"><span class="mark">√</span> <span>SIQS<span style="color:var(--text-dim)">.NET</span></span></div>
+    <div class="nav">
+      <div class="brand"><span class="mark">√</span><span>SIQS<span class="dot">.NET</span></span></div>
       <nav class="nav-links">
-        <a href="#tldr">TL;DR</a>
-        <a href="#benchmarks">Benchmarks</a>
-        <a href="#features">Features</a>
-        <a href="#workbench">Workbench</a>
-        <a href="how-it-works.html">How it works</a>
+        <a class="hide-sm" href="#start">Start</a>
+        <a class="hide-sm" href="#benchmarks">Benchmarks</a>
+        <a class="hide-sm" href="#pipeline">Pipeline</a>
+        <a class="hide-sm" href="#workbench">Workbench</a>
+        <a href="how-it-works.html">How&nbsp;it&nbsp;works</a>
+        <a class="hide-sm" href="appendix.html">Appendix</a>
         <a class="ghlink" href="https://github.com/JesHansen/siqs.net">GitHub&nbsp;&rarr;</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zM4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2zm18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2zM5.6 6.9 4.2 5.5a1 1 0 0 1 1.4-1.4L7 5.5A1 1 0 0 1 5.6 6.9zm12.8 12.8L17 18.3a1 1 0 0 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.4zM18.4 6.9A1 1 0 0 1 17 5.5l1.4-1.4a1 1 0 0 1 1.4 1.4zM5.6 19.7a1 1 0 0 1-1.4-1.4L5.6 17A1 1 0 0 1 7 18.3z"/></svg>
+        </button>
       </nav>
     </div>
   </header>
 
   <main>
-    <!-- ---------- Hero ---------- -->
-    <div class="hero wrap">
-      <div class="eyebrow">Self-Initializing Quadratic Sieve · C# / .NET 10</div>
-      <h1>Factor numbers.<br />Understand how.</h1>
-      <p class="tagline">An open-source implementation of a classic integer-factorization algorithm.</p>
-      <p class="lede">
-        SIQS.NET is both a factorization workbench and an <em>explorable</em> implementation of the
-        self-initializing quadratic sieve. It routinely factors composites in the 85&ndash;100 digit
-        range on ordinary hardware — and every phase of the algorithm is visible, inspectable, and
-        documented.
-      </p>
 
-      <!-- ---------- TL;DR ---------- -->
-      <div class="tldr" id="tldr">
-        <div class="tldr-head">
-          <h2>TL;DR — I just want to factor stuff</h2>
-          <span class="badge">⏱ 2-minute read</span>
+    <!-- ============================ Hero ============================ -->
+    <section class="hero">
+      <div class="wrap">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <span class="kicker reveal">Self-initializing quadratic sieve · C# / .NET 10</span>
+            <h1 class="reveal d1">Factor numbers.<br /><span class="u">Understand how.</span></h1>
+            <p class="tagline reveal d2">An open-source implementation of a classic integer-factorization algorithm.</p>
+            <p class="lede reveal d3">
+              A factorization workbench <em>and</em> a readable implementation of the
+              self-initializing quadratic sieve — routinely splitting 85–100&nbsp;digit composites
+              on ordinary hardware, with every phase visible and documented.
+            </p>
+            <div class="cta-row reveal d4">
+              <a class="btn btn-primary" href="#start">Get started <span class="arrow">→</span></a>
+              <a class="btn btn-ghost" href="how-it-works.html">How the sieve works <span class="arrow">→</span></a>
+            </div>
+          </div>
+
+          <figure class="sieve-fig reveal d3" aria-label="A live miniature of the sieve: factor-base primes stamp their arithmetic progressions across an interval, and the smooth survivors light up.">
+            <canvas id="sieve-canvas" role="img"
+              aria-label="An animated sieve interval. Primes mark their multiples across a grid of cells; a scan then highlights the smooth survivors."></canvas>
+            <figcaption>
+              <span class="legend">
+                <span><span class="swatch hit"></span> log-marks</span>
+                <span><span class="swatch"></span> smooth survivor</span>
+              </span>
+              <span>sieve(N)</span>
+            </figcaption>
+          </figure>
         </div>
-        <ol>
-          <li>
-            <p>Install the <a href="https://dotnet.microsoft.com/download">.NET 10 SDK</a>, then clone and build:</p>
-            <pre><code>git clone https://github.com/JesHansen/siqs.net.git
+      </div>
+    </section>
+
+    <!-- ============================ Start / TL;DR ============================ -->
+    <section id="start" class="chapter">
+      <div class="wrap">
+        <div class="chapter-head reveal">
+          <span class="kicker">The two-minute path</span>
+          <h2>I just want to factor something.</h2>
+          <p class="section-lede">Install the SDK, build once, and point the <code>qs</code> binary at a
+            number. Sensible defaults are chosen from its digit count — no tuning required.</p>
+        </div>
+
+        <div class="panel reveal">
+          <div class="steps">
+            <div class="step">
+              <div class="marker"></div>
+              <div class="body">
+                <p>Install the <a href="https://dotnet.microsoft.com/download">.NET&nbsp;10 SDK</a>, then clone and build.</p>
+                <pre><code>git clone https://github.com/JesHansen/siqs.net.git
 cd siqs.net
 dotnet build -c Release SIQS.slnx</code></pre>
-          </li>
-          <li>
-            <p>The build produces a <code>qs</code> binary — point it straight at the number you
-              want factored (no need to <code>dotnet run</code> the project again):</p>
-            <pre><code>.\QS\bin\Release\net10.0\qs.exe 150478035830330483870744795468187571781390056303346096534807</code></pre>
-            <p class="hint">On Linux or macOS, run <code>./QS/bin/Release/net10.0/qs</code> (drop the
-              <code>.exe</code>).</p>
-            <p>A live terminal view tracks every phase — factor base, sieving, filtering, linear
-              algebra, square root — with a progress bar, elapsed time, and an estimate of the time
-              left for the long-running phases:</p>
-            <figure class="term">
-              <img src="img/qs-tui-live.png" width="1204" height="228" loading="lazy"
-                   alt="The qs terminal UI mid-run: factor base done, sieving at 53% with a live progress bar showing elapsed time, estimated time left, and relations found, and the remaining phases still pending." />
-            </figure>
-            <p>When it finishes, each phase collapses to a one-line summary above the factorization:</p>
-            <figure class="term">
-              <img src="img/qs-tui-result.png" width="1204" height="348" loading="lazy"
-                   alt="The qs terminal UI after completion: all five phases checked off with one-line summaries, the result N = p times q, and a dim job and artifacts footer." />
-            </figure>
-            <p class="hint">Want the raw numbers back? <code>--debug</code> restores the full per-phase
-              counter dump, and <code>--quiet</code> prints only the factor product to stdout so you
-              can pipe <code>qs</code> into a script.</p>
-          </li>
-          <li>
-            <p>Prefer buttons over terminals? Start the web workbench and open
-              <code>http://localhost:5078</code>:</p>
-            <pre><code>dotnet run -c Release --project SIQS.UI/SIQS.UI.csproj --urls "http://localhost:5078"</code></pre>
-          </li>
-        </ol>
-        <p style="margin-top:1.2rem;color:var(--text-dim)">
-          That's the whole workflow. A prime input exits cleanly with &ldquo;no non-trivial
-          factor&rdquo;; <kbd>Ctrl+C</kbd> cancels a run and leaves its artifacts resumable with
-          <code>--resume</code>. Sensible defaults are chosen from the digit size of your number —
-          no tuning required. Curious what's happening under the hood?
-          <a href="how-it-works.html">Read the deep dive.</a>
-        </p>
-      </div>
+              </div>
+            </div>
 
-      <div class="cta-row" style="margin-top:2rem">
-        <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">View source on GitHub</a>
-        <a class="btn btn-ghost" href="how-it-works.html">How the sieve works&nbsp;→</a>
-      </div>
-    </div>
+            <div class="step">
+              <div class="marker"></div>
+              <div class="body">
+                <p>The build produces a <code>qs</code> binary. Point it straight at the number you want factored — no need to <code>dotnet run</code> the project again.</p>
+                <pre><code>.\QS\bin\Release\net10.0\qs.exe 150478035830330483870744795468187571781390056303346096534807</code></pre>
+                <p class="hint">On Linux or macOS, run <code>./QS/bin/Release/net10.0/qs</code> (drop the <code>.exe</code>).</p>
+                <p>A live terminal view tracks every phase — factor base, sieving, filtering, linear algebra, square root — with a progress bar, elapsed time, and an estimate of the time left.</p>
+                <figure class="term reveal">
+                  <img src="img/qs-tui-live.png" width="1204" height="228" loading="lazy"
+                       alt="The qs terminal UI mid-run: factor base done, sieving at 53% with a live progress bar showing elapsed time, estimated time left, and relations found, and the remaining phases still pending." />
+                </figure>
+                <p>When it finishes, each phase collapses to a one-line summary above the factorization.</p>
+                <figure class="term reveal">
+                  <img src="img/qs-tui-result.png" width="1204" height="348" loading="lazy"
+                       alt="The qs terminal UI after completion: all five phases checked off with one-line summaries, the result N = p times q, and a dim job and artifacts footer." />
+                </figure>
+                <p class="hint">Want the raw numbers? <code>--debug</code> restores the full per-phase counter dump, and <code>--quiet</code> prints only the factor product to stdout so you can pipe <code>qs</code> into a script.</p>
+              </div>
+            </div>
 
-    <!-- ---------- Benchmarks ---------- -->
-    <section id="benchmarks">
+            <div class="step">
+              <div class="marker"></div>
+              <div class="body">
+                <p>Prefer buttons over terminals? Start the web workbench and open <code>http://localhost:5078</code>.</p>
+                <pre><code>dotnet run -c Release --project SIQS.UI/SIQS.UI.csproj --urls "http://localhost:5078"</code></pre>
+              </div>
+            </div>
+          </div>
+
+          <p class="note" style="margin-top:1.6rem">
+            <strong>That's the whole workflow.</strong> A prime input exits cleanly with “no non-trivial
+            factor”; <kbd>Ctrl+C</kbd> cancels a run and leaves its artifacts resumable with
+            <code>--resume</code>. Curious what's happening under the hood?
+            <a href="how-it-works.html">Read the deep dive.</a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ Benchmarks ============================ -->
+    <section id="benchmarks" class="chapter">
       <div class="wrap">
-        <h2>Real numbers, real hardware</h2>
-        <p class="section-lede">
-          Each row below is a single end-to-end factorization of a fresh, balanced semiprime —
-          two prime factors of equal length, the hardest split for a given digit count — run with
-          the default auto-tuned parameters. No cherry-picking, no warm caches.
-        </p>
+        <div class="leaf">
+          <div class="chapter-head reveal">
+            <span class="kicker">Measured, not promised</span>
+            <h2>Real numbers, real hardware.</h2>
+            <p class="section-lede">Each rung is one end-to-end factorization of a fresh, balanced
+              semiprime — two primes of equal length, the hardest split for a given digit count — with
+              default auto-tuned parameters. No cherry-picking, no warm caches.</p>
+          </div>
+          <p class="note margin">Every ten digits multiplies the work several-fold. The sub-second rows
+            are dominated by process start-up and JIT warm-up, not the sieve itself.</p>
+        </div>
 
-        <div class="bench-rig">
+        <div class="rig reveal" style="margin-top:2rem">
           <span class="chip">AMD Ryzen 7 5800X · 8C/16T</span>
           <span class="chip">32 GB RAM</span>
-          <span class="chip">.NET 10 · Release build</span>
+          <span class="chip">.NET 10 · Release</span>
           <span class="chip">default parameters</span>
         </div>
 
-        <div class="table-scroll" style="margin-top:1.4rem">
-          <table>
-            <thead>
-              <tr><th>Composite</th><th>Factor split</th><th>Wall-clock time</th></tr>
-            </thead>
-            <tbody>
-              <tr><td><code>C25</code></td><td>13 × 13 digits</td><td>0.8&nbsp;s</td></tr>
-              <tr><td><code>C35</code></td><td>18 × 18 digits</td><td>0.6&nbsp;s</td></tr>
-              <tr><td><code>C45</code></td><td>23 × 23 digits</td><td>1.6&nbsp;s</td></tr>
-              <tr><td><code>C55</code></td><td>28 × 28 digits</td><td>2.9&nbsp;s</td></tr>
-              <tr><td><code>C65</code></td><td>33 × 33 digits</td><td>6.1&nbsp;s</td></tr>
-              <tr><td><code>C75</code></td><td>38 × 38 digits</td><td>22.8&nbsp;s</td></tr>
-              <tr><td><code>C85</code></td><td>43 × 43 digits</td><td>3&nbsp;m 17&nbsp;s</td></tr>
-              <tr class="hi"><td><code>C93</code></td><td>47 × 47 digits</td><td>11&nbsp;m 7&nbsp;s</td></tr>
-            </tbody>
-          </table>
+        <!-- Log-scaled bars: rest = distance the fill retracts from the right (smaller = longer). -->
+        <div class="ladder">
+          <div class="rung" style="--rest:88%"><span class="lbl">C25</span><span class="track"><span class="fill"></span></span><span class="time">0.8&nbsp;s</span></div>
+          <div class="rung" style="--rest:90%"><span class="lbl">C35</span><span class="track"><span class="fill"></span></span><span class="time">0.6&nbsp;s</span></div>
+          <div class="rung" style="--rest:82%"><span class="lbl">C45</span><span class="track"><span class="fill"></span></span><span class="time">1.6&nbsp;s</span></div>
+          <div class="rung" style="--rest:76%"><span class="lbl">C55</span><span class="track"><span class="fill"></span></span><span class="time">2.9&nbsp;s</span></div>
+          <div class="rung" style="--rest:66%"><span class="lbl">C65</span><span class="track"><span class="fill"></span></span><span class="time">6.1&nbsp;s</span></div>
+          <div class="rung" style="--rest:52%"><span class="lbl">C75</span><span class="track"><span class="fill"></span></span><span class="time">22.8&nbsp;s</span></div>
+          <div class="rung" style="--rest:26%"><span class="lbl">C85</span><span class="track"><span class="fill"></span></span><span class="time">3&nbsp;m&nbsp;17&nbsp;s</span></div>
+          <div class="rung peak" style="--rest:6%"><span class="lbl">C93</span><span class="track"><span class="fill"></span></span><span class="time">11&nbsp;m&nbsp;7&nbsp;s</span></div>
         </div>
-
-        <div class="note">
-          These are <strong>timings for individual factorizations, not guarantees for every integer
-          of that size.</strong> The quadratic sieve's cost is dominated by the size of the number,
-          but it also varies from one composite to the next, and the sub-second rows are dominated by
-          process start-up and JIT warm-up rather than the sieve itself. Treat the table as a feel for
-          the growth curve on ordinary desktop hardware — each step of ten digits multiplies the work
-          several-fold — not as a benchmark you should expect to reproduce to the second.
-        </div>
+        <p class="hint reveal" style="margin-top:1rem">Bars are log-scaled to fit the growth curve; each C&thinsp;<em>n</em> is an <em>n</em>-digit composite split into two equal halves.</p>
       </div>
     </section>
 
-    <!-- ---------- Features ---------- -->
-    <section id="features">
+    <!-- ============================ What you can do ============================ -->
+    <section id="do" class="chapter">
       <div class="wrap">
-        <h2>What you can do with it</h2>
-        <p class="section-lede">
-          A single solution that spans a working factorizer, a live web workbench, distributed
-          sieving, and interactive learning material.
-        </p>
-        <div class="grid">
-          <div class="card">
-            <div class="ico">🧮</div>
-            <h3>Factor an integer</h3>
+        <div class="chapter-head reveal">
+          <span class="kicker">What you can do with it</span>
+          <h2>One solution, five ways in.</h2>
+          <p class="section-lede">A working factorizer, a live web workbench, distributed sieving, and
+            interactive learning material — all in a single .NET solution.</p>
+        </div>
+
+        <div class="deeds">
+          <div class="deed reveal"><div class="idx">01</div><div><h3>Factor an integer</h3>
             <p>Run a one-shot factorization from the <code>qs</code> command line or the web
-              <strong>Factorize</strong> page. Every parameter — factor-base bound, multiplier,
-              sieve interval, large-prime bounds, parallelism — has a sensible digit-size default
-              and a CLI override.</p>
-          </div>
-          <div class="card">
-            <div class="ico">📊</div>
-            <h3>Watch a live run</h3>
+              <strong>Factorize</strong> page. Every parameter — factor-base bound, multiplier, sieve
+              interval, large-prime bounds, parallelism — has a digit-size default and a CLI override.</p></div></div>
+          <div class="deed reveal"><div class="idx">02</div><div><h3>Watch a live run</h3>
             <p>Phase status, elapsed time per phase, relation counters, matrix dimensions, and run
-              artifacts are all retained for inspection in the Jobs view. Interrupted runs resume
-              from their workspace.</p>
-          </div>
-          <div class="card">
-            <div class="ico">🌐</div>
-            <h3>Distribute the sieve</h3>
-            <p>Sieving dominates the cost, so the server can lease disjoint slices of polynomial
-              work to volunteer clients over HTTP. Workers independently rebuild and verify the job
-              parameters before sieving a single value.</p>
-          </div>
-          <div class="card">
-            <div class="ico">⬇️</div>
-            <h3>Self-contained workers</h3>
+              artifacts are retained for inspection in the Jobs view. Interrupted runs resume from their
+              workspace.</p></div></div>
+          <div class="deed reveal"><div class="idx">03</div><div><h3>Distribute the sieve</h3>
+            <p>Sieving dominates the cost, so the server can lease disjoint slices of polynomial work to
+              volunteer clients over HTTP. Workers independently rebuild and verify the job parameters
+              before sieving a single value.</p></div></div>
+          <div class="deed reveal"><div class="idx">04</div><div><h3>Run self-contained workers</h3>
             <p>Download single-file sieve clients for <strong>Windows x64</strong> and
-              <strong>Linux x64</strong> straight from the workbench — no .NET runtime required on
-              the worker machine.</p>
+              <strong>Linux x64</strong> straight from the workbench — no .NET runtime required on the
+              worker machine.</p></div></div>
+          <div class="deed reveal"><div class="idx">05</div><div><h3>Learn it in Sieve School</h3>
+            <p>A guided tour through a worked factorization, an animated sieve window, topic quizzes, and
+              a historical timeline from Fermat and Kraitchik through Pomerance and RSA-129.</p></div></div>
+          <div class="deed reveal"><div class="idx">06</div><div><h3>Work a stage at a time</h3>
+            <p>Five focused CLI tools — <code>qs-fb</code>, <code>qs-sieve</code>, <code>qs-filter</code>,
+              <code>qs-linalg</code>, <code>qs-sqrt</code> — run each pipeline phase standalone over plain
+              text artifacts you can read and diff.</p></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================ Pipeline ============================ -->
+    <section id="pipeline" class="chapter">
+      <div class="wrap">
+        <div class="chapter-head reveal">
+          <span class="kicker">The pipeline at a glance</span>
+          <h2>Everything serves one line of algebra.</h2>
+        </div>
+
+        <div class="congruence reveal" style="max-width:760px">
+          <div class="eq">X<span class="hl">²</span> ≡ Y<span class="hl">²</span> <span style="color:var(--ink-faint)">(mod N)</span></div>
+          <p class="cap">The whole machine exists to build one congruence of squares. When
+            X&nbsp;≢&nbsp;±Y, <code>gcd(X − Y, N)</code> reveals a factor. Everything below is bookkeeping
+            in service of this single line.</p>
+        </div>
+
+        <div class="pipeline reveal" style="margin-top:2.5rem">
+          <div class="phase"><div class="dot">1</div><div>
+            <h3>Factor base <span class="file">qs-fb → factor_base.txt</span></h3>
+            <p>Pick a multiplier, then collect the primes <em>p</em> for which the scaled target is a
+              quadratic residue — the only primes that can ever divide a sieve value.</p></div></div>
+          <div class="phase"><div class="dot">2</div><div>
+            <h3>Sieving <span class="file">qs-sieve → relations_*.txt</span></h3>
+            <p>Generate families of polynomials and sieve them over a symmetric interval, adding
+              logarithmic weights where factor-base primes divide. Survivors become relations; near-misses
+              become large-prime partials. This is the hot path — and the part that distributes.</p></div></div>
+          <div class="phase"><div class="dot">3</div><div>
+            <h3>Filtering <span class="file">qs-filter → filtered_matrix.txt</span></h3>
+            <p>Combine partial relations through large-prime graph cycles, remove duplicates and
+              singletons, and trim the result into a lean sparse matrix over GF(2).</p></div></div>
+          <div class="phase"><div class="dot">4</div><div>
+            <h3>Linear algebra <span class="file">qs-linalg → dependencies.txt</span></h3>
+            <p>Run <a href="appendix.html#block-lanczos">Block Lanczos</a> over GF(2) to find non-empty
+              sets of relations whose exponent vectors XOR to zero — each one a candidate congruence of
+              squares.</p></div></div>
+          <div class="phase"><div class="dot">5</div><div>
+            <h3>Square root <span class="file">qs-sqrt → factors.txt</span></h3>
+            <p>Reconstruct X and Y from a dependency, verify every exponent sum is even, and take GCDs
+              against N. A non-trivial answer is your factor.</p></div></div>
+        </div>
+
+        <p class="note reveal" style="margin-top:1.6rem">
+          One command, <code>qs.exe</code>, runs all five phases in a single process with live console
+          progress — the per-phase tools exist so you can study, debug, or benchmark any stage in
+          isolation against hand-crafted inputs.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================ Workbench ============================ -->
+    <section id="workbench" class="chapter">
+      <div class="wrap">
+        <div class="chapter-head reveal">
+          <span class="kicker">See the workbench</span>
+          <h2>The whole system, before you clone anything.</h2>
+          <p class="section-lede">The <code>SIQS.UI</code> Blazor app is the easiest way to explore
+            SIQS.NET — start a run, watch every phase, browse archived jobs and artifacts, hand sieving
+            out to other machines, and learn the method.</p>
+        </div>
+
+        <div class="plates">
+          <div class="plate reveal">
+            <figure class="plate-fig" data-parallax="18">
+              <img src="img/workbench-factorize.png" width="1360" height="498" loading="lazy"
+                   alt="The Factorize page: a target-N field, an advanced-parameters panel, and a recent-jobs list." />
+            </figure>
+            <div class="plate-body">
+              <span class="kicker no-rule">Factorize</span>
+              <h3>Start a run from the browser.</h3>
+              <p>Every tuning knob has a digit-size default and an override behind <em>Advanced
+                parameters</em>. The live card follows the current phase to completion.</p>
+            </div>
           </div>
-          <div class="card">
-            <div class="ico">🎓</div>
-            <h3>Sieve School</h3>
-            <p>A guided tour through a worked factorization, an animated sieve window, topic
-              quizzes, and a historical timeline from Fermat and Kraitchik through Pomerance and
-              RSA-129.</p>
+
+          <div class="plate reveal">
+            <figure class="plate-fig" data-parallax="18">
+              <img src="img/workbench-jobs.png" width="1360" height="668" loading="lazy"
+                   alt="The Jobs list showing seven completed factorizations with sizes, durations, and factors." />
+            </figure>
+            <div class="plate-body">
+              <span class="kicker no-rule">Jobs</span>
+              <h3>Every factorization, live and archived.</h3>
+              <p>Target size, status, wall-clock duration, and discovered factors — filterable by kind and
+                status, each one openable for the full record.</p>
+            </div>
           </div>
-          <div class="card">
-            <div class="ico">🔬</div>
-            <h3>Stage-by-stage tools</h3>
-            <p>Five focused CLI tools — <code>qs-fb</code>, <code>qs-sieve</code>,
-              <code>qs-filter</code>, <code>qs-linalg</code>, <code>qs-sqrt</code> — run each
-              pipeline phase standalone over plain text artifacts you can read and diff.</p>
+
+          <div class="plate reveal">
+            <figure class="plate-fig" data-parallax="18">
+              <img src="img/workbench-jobdetails.png" width="1360" height="1000" loading="lazy"
+                   alt="A job-details page: a five-phase timeline, the factor result, and a per-phase counters table." />
+            </figure>
+            <div class="plate-body">
+              <span class="kicker no-rule">Job details</span>
+              <h3>A per-phase timeline and every counter.</h3>
+              <p>Elapsed times, the final congruence-of-squares result, factor-base size, relations found,
+                matrix dimensions, Block Lanczos dependencies — the complete set each stage recorded.</p>
+            </div>
+          </div>
+
+          <div class="plate reveal">
+            <figure class="plate-fig" data-parallax="18">
+              <img src="img/workbench-distributed.png" width="1360" height="768" loading="lazy"
+                   alt="The Distributed page: submit a composite and download self-contained Windows and Linux sieve clients." />
+            </figure>
+            <div class="plate-body">
+              <span class="kicker no-rule">Distributed</span>
+              <h3>Share sieving across machines.</h3>
+              <p>Submit a job whose sieving is spread over a pool, and download self-contained
+                <strong>Windows x64</strong> and <strong>Linux x64</strong> workers — no runtime required.</p>
+            </div>
+          </div>
+
+          <div class="plate reveal">
+            <figure class="plate-fig" data-parallax="18">
+              <img src="img/workbench-learn.png" width="1360" height="530" loading="lazy"
+                   alt="Sieve School: a guided tour and a quiz, with a table mapping tour steps to pipeline phases." />
+            </figure>
+            <div class="plate-body">
+              <span class="kicker no-rule">Sieve School</span>
+              <h3>A guided tour and a randomized quiz.</h3>
+              <p>Walk a worked factorization step by step, each one linked to the pipeline phase it
+                explains — from foundations through square roots.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ---------- Workbench screenshots ---------- -->
-    <section id="workbench">
+    <!-- ============================ Toolchain ============================ -->
+    <section id="toolchain" class="chapter">
       <div class="wrap">
-        <h2>See the workbench</h2>
-        <p class="section-lede">
-          The <code>SIQS.UI</code> Blazor app is the easiest way to explore the system — start a run,
-          watch every phase, browse archived jobs and their artifacts, hand sieving out to other
-          machines, and learn the method. Here is what it looks like before you clone anything.
-        </p>
-
-        <div class="shots">
-          <figure>
-            <img src="img/workbench-factorize.png" width="1360" height="498"
-                 alt="The Factorize page: a target-N field, an advanced-parameters panel, and a recent-jobs list." loading="lazy" />
-            <figcaption><strong>Factorize.</strong> Start a one-shot run from the browser. Every
-              tuning knob has a digit-size default and an override behind <em>Advanced parameters</em>.</figcaption>
-          </figure>
-          <figure>
-            <img src="img/workbench-jobs.png" width="1360" height="668"
-                 alt="The Jobs list showing seven completed factorizations with sizes, durations, and factors." loading="lazy" />
-            <figcaption><strong>Jobs.</strong> Every factorization, live and archived — target size,
-              status, wall-clock duration, and the discovered factors, filterable by kind and status.</figcaption>
-          </figure>
-          <figure class="wide">
-            <img src="img/workbench-jobdetails.png" width="1360" height="1000"
-                 alt="A job-details page: a five-phase timeline, the factor result, and a per-phase counters table." loading="lazy" />
-            <figcaption><strong>Job details.</strong> A per-phase timeline with elapsed times, the
-              final congruence-of-squares result, and the complete counter set every stage recorded —
-              factor-base size, relations found, matrix dimensions, Block Lanczos dependencies, and more.</figcaption>
-          </figure>
-          <figure>
-            <img src="img/workbench-distributed.png" width="1360" height="768"
-                 alt="The Distributed page: submit a composite and download self-contained Windows and Linux sieve clients." loading="lazy" />
-            <figcaption><strong>Distributed.</strong> Submit a job whose sieving is shared across
-              machines, and download self-contained <strong>Windows x64</strong> and
-              <strong>Linux x64</strong> workers — no .NET runtime required on the worker.</figcaption>
-          </figure>
-          <figure>
-            <img src="img/workbench-learn.png" width="1360" height="530"
-                 alt="Sieve School: a guided tour and a quiz, with a table mapping tour steps to pipeline phases." loading="lazy" />
-            <figcaption><strong>Sieve School.</strong> A guided tour through a worked factorization
-              and a randomized quiz, each step linked to the pipeline phase it explains.</figcaption>
-          </figure>
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- Pipeline at a glance ---------- -->
-    <section id="pipeline">
-      <div class="wrap">
-        <h2>The pipeline at a glance</h2>
-        <p class="section-lede">
-          A factorization passes through five phases. Each is its own library with its own CLI
-          tool, and each hands the next a plain UTF-8 text file — parsable by human and machine
-          alike. <a href="how-it-works.html">The deep dive</a> explains the mathematics of every
-          step.
-        </p>
-
-        <div class="math-callout">
-          <div class="eq">X² ≡ Y² (mod N)</div>
-          <div class="caption">
-            The whole machine exists to build one congruence of squares. When X ≢ ±Y,
-            <code>gcd(X − Y, N)</code> reveals a factor.
+        <div class="leaf">
+          <div class="chapter-head reveal">
+            <span class="kicker">The toolchain</span>
+            <h2>Divided by algorithmic responsibility.</h2>
+            <p class="section-lede">Phase libraries with typed APIs, thin CLI front-ends, a shared
+              contracts library, and an orchestration pipeline that both the console capstone and the web
+              UI sit on top of.</p>
           </div>
+          <blockquote class="pull margin">Debugging a factorization is reading files, not attaching debuggers.</blockquote>
         </div>
 
-        <div class="pipeline">
-          <div class="step">
-            <div class="num"></div>
-            <div>
-              <h3>Factor base &nbsp;<code style="font-size:0.8em">qs-fb → factor_base.txt</code></h3>
-              <p>Pick a multiplier, then collect the primes p for which the scaled target is a
-                quadratic residue — the only primes that can ever divide a sieve value.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="num"></div>
-            <div>
-              <h3>Sieving &nbsp;<code style="font-size:0.8em">qs-sieve → relations_*.txt</code></h3>
-              <p>Generate families of polynomials and sieve them over a symmetric interval, adding
-                logarithmic weights where factor-base primes divide. Survivors become relations;
-                near-misses become large-prime partials. This is the hot path — and the part that
-                can be distributed.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="num"></div>
-            <div>
-              <h3>Filtering &nbsp;<code style="font-size:0.8em">qs-filter → filtered_matrix.txt</code></h3>
-              <p>Combine partial relations through large-prime graph cycles, remove duplicates and
-                singletons, and trim the result into a lean sparse matrix over GF(2).</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="num"></div>
-            <div>
-              <h3>Linear algebra &nbsp;<code style="font-size:0.8em">qs-linalg → dependencies.txt</code></h3>
-              <p>Run Block Lanczos over GF(2) to find non-empty sets of relations whose exponent
-                vectors XOR to zero — each one a candidate congruence of squares.</p>
-            </div>
-          </div>
-          <div class="step">
-            <div class="num"></div>
-            <div>
-              <h3>Square root &nbsp;<code style="font-size:0.8em">qs-sqrt → factors.txt</code></h3>
-              <p>Reconstruct X and Y from a dependency, verify every exponent sum is even, and take
-                GCDs against N. A non-trivial answer is your factor.</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="note">
-          One command, <code>qs.exe</code>, runs all five phases in a single process with live
-          console progress — the per-phase tools exist so you can study, debug, or benchmark any
-          stage in isolation against hand-crafted inputs.
-        </div>
-      </div>
-    </section>
-
-    <!-- ---------- Toolchain / repository ---------- -->
-    <section id="toolchain">
-      <div class="wrap">
-        <h2>The toolchain</h2>
-        <p class="section-lede">
-          The solution is deliberately divided by algorithmic responsibility — phase libraries with
-          typed APIs, thin CLI front-ends, a shared contracts library, and an orchestration
-          pipeline that both the console capstone and the web UI sit on top of.
-        </p>
-        <div class="table-scroll">
+        <div class="table-scroll reveal" style="margin-top:2rem">
           <table>
-            <thead>
-              <tr><th>Component</th><th>What it is</th></tr>
-            </thead>
+            <thead><tr><th>Component</th><th>What it is</th></tr></thead>
             <tbody>
               <tr><td><code>qs.exe</code></td><td>The capstone: factors a number end-to-end in one process with live progress, resumable workspaces, and meaningful exit codes.</td></tr>
               <tr><td><code>qs-fb</code>, <code>qs-sieve</code>, <code>qs-filter</code>, <code>qs-linalg</code>, <code>qs-sqrt</code></td><td>Standalone per-phase tools that read and write the documented text artifacts.</td></tr>
@@ -350,66 +380,58 @@ dotnet build -c Release SIQS.slnx</code></pre>
           </table>
         </div>
 
-        <h3 style="margin-top:2.5rem">Everything is a text file</h3>
-        <p style="color:var(--text-dim);max-width:680px">
-          Every phase writes plain UTF-8 artifacts — <code>factor_base.txt</code>,
-          <code>relations_0000.txt</code>, <code>filtered_matrix.txt</code>,
-          <code>dependencies.txt</code>, <code>factors.txt</code> — with documented, versioned
-          header contracts. You can open any intermediate state of a factorization in a text
-          editor, diff two runs, or feed a hand-edited file back into the next phase.
-        </p>
+        <div class="reveal" style="margin-top:2.5rem;max-width:var(--measure)">
+          <h3>Everything is a text file.</h3>
+          <p style="color:var(--ink-dim)">Every phase writes plain UTF-8 artifacts —
+            <code>factor_base.txt</code>, <code>relations_0000.txt</code>,
+            <code>filtered_matrix.txt</code>, <code>dependencies.txt</code>, <code>factors.txt</code> —
+            with documented, versioned header contracts. Open any intermediate state of a factorization in
+            a text editor, diff two runs, or feed a hand-edited file back into the next phase.</p>
+        </div>
       </div>
     </section>
 
-    <!-- ---------- Distributed ---------- -->
-    <section id="distributed">
+    <!-- ============================ Distributed ============================ -->
+    <section id="distributed" class="chapter">
       <div class="wrap">
-        <h2>Distributed sieving</h2>
-        <p class="section-lede">
-          Sieving is embarrassingly parallel: disjoint polynomial families can be processed on
-          different machines with no coordination beyond handing out assignments. SIQS.NET
-          exploits that.
-        </p>
-        <div class="grid">
-          <div class="card">
-            <div class="ico">🗼</div>
-            <h3>The Overlord coordinates</h3>
-            <p>The server owns the job: it leases slices of polynomial indices, validates every
-              uploaded relation, re-issues abandoned leases, and runs filtering, linear algebra,
-              and square root centrally once enough relations arrive.</p>
-          </div>
-          <div class="card">
-            <div class="ico">🤝</div>
-            <h3>Workers verify, then trust</h3>
-            <p>A client performs a protocol handshake and independently reconstructs the factor
-              base and sieving parameters from the job descriptor. If its reconstruction disagrees
-              with the server's, it declines the job.</p>
-          </div>
-          <div class="card">
-            <div class="ico">📦</div>
-            <h3>Drop-in replacement</h3>
-            <p>The distributed sieve produces byte-compatible relation artifacts, so the rest of
-              the pipeline can't tell the difference between one machine and twenty.</p>
-          </div>
+        <div class="chapter-head reveal">
+          <span class="kicker">Distributed sieving</span>
+          <h2>Sieving is embarrassingly parallel.</h2>
+          <p class="section-lede">Disjoint polynomial families run on different machines with no
+            coordination beyond handing out assignments. SIQS.NET exploits that.</p>
         </div>
-        <pre style="margin-top:1.6rem"><code># On each worker — download from the server's Distributed page, then:
+
+        <div class="deeds">
+          <div class="deed reveal"><div class="idx">A</div><div><h3>The Overlord coordinates</h3>
+            <p>The server owns the job: it leases slices of polynomial indices, validates every uploaded
+              relation, re-issues abandoned leases, and runs filtering, linear algebra, and square root
+              centrally once enough relations arrive.</p></div></div>
+          <div class="deed reveal"><div class="idx">B</div><div><h3>Workers verify, then trust</h3>
+            <p>A client performs a protocol handshake and independently reconstructs the factor base and
+              sieving parameters from the job descriptor. If its reconstruction disagrees with the
+              server's, it declines the job.</p></div></div>
+          <div class="deed reveal"><div class="idx">C</div><div><h3>A drop-in replacement</h3>
+            <p>The distributed sieve produces byte-compatible relation artifacts, so the rest of the
+              pipeline can't tell the difference between one machine and twenty.</p></div></div>
+        </div>
+
+        <pre class="reveal" style="margin-top:2rem"><code># On each worker — download from the server's Distributed page, then:
 .\qs-sieve-client.exe http://your-siqs-server:5078     # Windows
 ./qs-sieve-client http://your-siqs-server:5078          # Linux</code></pre>
-        <div class="note">
-          The distributed API is designed for a trusted LAN. If you expose a server beyond one,
-          put it behind authentication, TLS, firewalling, and rate limits.
-        </div>
+        <p class="note reveal">The distributed API is designed for a trusted LAN. If you expose a server
+          beyond one, put it behind authentication, TLS, firewalling, and rate limits.</p>
       </div>
     </section>
 
-    <!-- ---------- Get started ---------- -->
-    <section id="start">
+    <!-- ============================ Get started (CTA) ============================ -->
+    <section id="get" class="chapter">
       <div class="wrap">
-        <h2>Get started</h2>
-        <p class="section-lede">
-          Everything runs from a fresh clone with the .NET 10 SDK — no other dependencies.
-        </p>
-        <pre><code># Build and test everything
+        <div class="chapter-head reveal">
+          <span class="kicker">Get started</span>
+          <h2>Everything from a fresh clone.</h2>
+          <p class="section-lede">No dependencies beyond the .NET&nbsp;10 SDK.</p>
+        </div>
+        <pre class="reveal"><code># Build and test everything
 dotnet build -c Release SIQS.slnx
 dotnet test --solution SIQS.slnx
 
@@ -422,33 +444,36 @@ dotnet run -c Release --project SIQS.UI/SIQS.UI.csproj --urls "http://localhost:
 
 # Generate a fresh 55-digit test target and factor it in one line
 CompositeGenerator.exe 55 | qs.exe</code></pre>
-        <div class="cta-row" style="justify-content:flex-start;margin-top:1.6rem">
-          <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">Full README &amp; source</a>
-          <a class="btn btn-ghost" href="how-it-works.html">Understand the algorithm&nbsp;→</a>
+        <div class="cta-row reveal" style="margin-top:1.6rem">
+          <a class="btn btn-primary" href="https://github.com/JesHansen/siqs.net">Full README &amp; source <span class="arrow">→</span></a>
+          <a class="btn btn-ghost" href="how-it-works.html">Understand the algorithm <span class="arrow">→</span></a>
         </div>
-        <div class="note">
-          SIQS.NET is intended for education, experimentation, benchmarking, and factoring
+        <p class="note reveal">SIQS.NET is for education, experimentation, benchmarking, and factoring
           integers you are authorized to factor. It owes an enormous debt to
           <a href="https://github.com/radii/msieve">msieve</a> and
-          <a href="https://github.com/bbuhrow/yafu">YAFU</a> — extraordinary factoring software
-          well worth studying.
-        </div>
+          <a href="https://github.com/bbuhrow/yafu">YAFU</a> — extraordinary factoring software well worth
+          studying.</p>
       </div>
     </section>
+
   </main>
 
   <footer class="site">
     <div class="wrap footer-inner">
       <div>
-        <strong>SIQS.NET</strong> — a quadratic sieve workbench. Happy sieving.
+        <div class="brand"><span class="mark">√</span><span>SIQS<span class="dot">.NET</span></span></div>
+        <p class="footer-note">A quadratic sieve workbench, in modern C# and .NET. Happy sieving.</p>
       </div>
-      <div>
-        <a href="https://github.com/JesHansen/siqs.net">GitHub</a> ·
-        <a href="how-it-works.html">How it works</a> ·
+      <div class="footer-links">
+        <a href="https://github.com/JesHansen/siqs.net">GitHub</a>
+        <a href="how-it-works.html">How it works</a>
+        <a href="appendix.html">Appendix</a>
         <a href="https://siqs.net/">siqs.net</a>
       </div>
     </div>
   </footer>
 
+  <script src="js/site.js" defer></script>
+  <script src="js/hero-sieve.js" defer></script>
 </body>
 </html>

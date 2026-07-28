@@ -4,18 +4,27 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Not found — SIQS.NET</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='monospace'>&#8730;</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='serif' font-style='italic'>&#8730;</text></svg>" />
+  <link rel="stylesheet" href="/css/fonts.css" />
   <link rel="stylesheet" href="/css/style.css" />
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("siqs-theme");
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
+    })();
+  </script>
 </head>
 <body>
-  <div class="hero wrap" style="min-height:70vh;display:flex;flex-direction:column;justify-content:center">
-    <div class="eyebrow">Error 404</div>
-    <h1>No factor found here.</h1>
-    <p class="lede">That page didn’t divide evenly. Let’s head back to a known congruence.</p>
-    <div class="cta-row">
-      <a class="btn btn-primary" href="/">Return home</a>
-      <a class="btn btn-ghost" href="https://github.com/JesHansen/siqs.net">Go to GitHub</a>
+  <main class="wrap" style="min-height:82vh;display:flex;flex-direction:column;justify-content:center;padding-block:4rem">
+    <span class="kicker">Error 404</span>
+    <h1 style="font-size:clamp(2.6rem,7vw,4.4rem);margin:1rem 0 0.6rem">No factor found here.</h1>
+    <p class="lede" style="max-width:34ch;color:var(--ink-dim)">That page didn't divide evenly. Let's head back to a known congruence.</p>
+    <div class="cta-row" style="margin-top:1.6rem">
+      <a class="btn btn-primary" href="/">Return home <span class="arrow">→</span></a>
+      <a class="btn btn-ghost" href="https://github.com/JesHansen/siqs.net">Go to GitHub <span class="arrow">→</span></a>
     </div>
-  </div>
+  </main>
 </body>
 </html>

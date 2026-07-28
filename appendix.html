@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Appendix — the machinery behind the sieve — SIQS.NET</title>
+  <meta name="description" content="Worked, from-scratch explanations of the classical tools the SIQS.NET deep dive relies on: quadratic residues and the Legendre symbol, the Tonelli–Shanks square-root algorithm, the Chinese Remainder Theorem, Block Lanczos over GF(2), and the binary-reflected Gray code." />
+  <link rel="canonical" href="https://siqs.net/appendix.html" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90' font-family='serif' font-style='italic'>&#8730;</text></svg>" />
+  <link rel="preload" href="fonts/ebgaramond-600-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="fonts/inter-400-latin.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <noscript><style>.reveal,.reveal-line{opacity:1!important;transform:none!important}</style></noscript>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem("siqs-theme");
+        document.documentElement.setAttribute("data-theme", t === "light" ? "light" : "dark");
+      } catch (e) { document.documentElement.setAttribute("data-theme", "dark"); }
+    })();
+    MathJax = {
+      tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$'], ['\\[', '\\]']] },
+      chtml: { displayAlign: 'center' },
+      startup: {
+        pageReady: function () {
+          return MathJax.startup.defaultPageReady().then(function () {
+            // equations + font swaps change the layout, so re-land on a deep-linked anchor
+            var jump = function () {
+              if (!location.hash) return;
+              var el = document.querySelector(location.hash);
+              if (el) el.scrollIntoView();
+            };
+            jump();
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(jump);
+            window.addEventListener("load", jump);
+          });
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+
+  <div class="progress" aria-hidden="true"></div>
+
+  <header class="site">
+    <div class="nav">
+      <div class="brand"><a href="index.html"><span class="mark">√</span><span>SIQS<span class="dot">.NET</span></span></a></div>
+      <nav class="nav-links">
+        <a class="hide-sm" href="index.html#start">Start</a>
+        <a class="hide-sm" href="index.html#pipeline">Pipeline</a>
+        <a href="how-it-works.html">How&nbsp;it&nbsp;works</a>
+        <a href="appendix.html" class="active">Appendix</a>
+        <a class="ghlink" href="https://github.com/JesHansen/siqs.net">GitHub&nbsp;&rarr;</a>
+        <button class="theme-toggle" type="button" aria-label="Toggle light and dark theme" title="Toggle theme">
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-13a1 1 0 0 1-1-1V1a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm0 20a1 1 0 0 1-1-1v-2a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zM4 13H2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2zm18 0h-2a1 1 0 0 1 0-2h2a1 1 0 0 1 0 2zM5.6 6.9 4.2 5.5a1 1 0 0 1 1.4-1.4L7 5.5A1 1 0 0 1 5.6 6.9zm12.8 12.8L17 18.3a1 1 0 0 1 1.4-1.4l1.4 1.4a1 1 0 0 1-1.4 1.4zM18.4 6.9A1 1 0 0 1 17 5.5l1.4-1.4a1 1 0 0 1 1.4 1.4zM5.6 19.7a1 1 0 0 1-1.4-1.4L5.6 17A1 1 0 0 1 7 18.3z"/></svg>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="article">
+    <div class="article-hero">
+      <span class="kicker">Appendix · reference</span>
+      <h1>The machinery behind the sieve</h1>
+      <p class="subtitle">Five classical tools the deep dive leans on that reach past a first course in algebra — each explained from scratch, with a worked example you can check by hand.</p>
+    </div>
+
+    <p>
+      The <a href="how-it-works.html">main walkthrough</a> keeps its eye on the sieve and treats
+      several supporting results as black boxes: it takes modular square roots, invokes the Chinese
+      Remainder Theorem, and hands its matrix to Block Lanczos without pausing to say how any of them
+      work. This appendix opens those boxes. Nothing here is needed to <em>use</em> SIQS.NET, but each
+      piece is a small, self-contained pleasure, and together they are most of what separates the
+      textbook sketch of the quadratic sieve from a program that actually runs.
+    </p>
+
+    <nav class="toc reveal">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#residues">Quadratic residues &amp; the Legendre symbol</a></li>
+        <li><a href="#tonelli-shanks">Tonelli–Shanks: square roots mod&nbsp;p</a></li>
+        <li><a href="#crt">The Chinese Remainder Theorem</a></li>
+        <li><a href="#block-lanczos">Block Lanczos over GF(2)</a></li>
+        <li><a href="#gray">The binary-reflected Gray code</a></li>
+      </ol>
+    </nav>
+
+    <!-- ============================================================ -->
+    <h2 id="residues"><span class="folio">§A1</span> Quadratic residues &amp; the Legendre symbol</h2>
+
+    <p>
+      Fix an odd prime \(p\). A number \(n\) (not divisible by \(p\)) is a <strong>quadratic
+      residue</strong> mod \(p\) if the congruence \(r^2 \equiv n \pmod p\) has a solution — if \(n\)
+      is a square modulo \(p\). Exactly half of the nonzero residues \(1, 2, \dots, p-1\) are squares,
+      because \(r\) and \(-r\) give the same square and nothing else collides.
+    </p>
+
+    <p>The <strong>Legendre symbol</strong> records this in one glyph:</p>
+    $$
+      \left(\frac{n}{p}\right) =
+      \begin{cases}
+        +1 & n \text{ is a nonzero square mod } p,\\[2pt]
+        -1 & n \text{ is not a square mod } p,\\[2pt]
+        \phantom{+}0 & p \mid n.
+      \end{cases}
+    $$
+
+    <p>
+      You never have to search for \(r\) to evaluate it. <strong>Euler's criterion</strong> computes
+      the symbol with a single modular exponentiation:
+    </p>
+    $$ \left(\frac{n}{p}\right) \equiv n^{(p-1)/2} \pmod p. $$
+    <p>
+      The right-hand side is a square root of \(n^{p-1} \equiv 1\) (by Fermat's little theorem), so it
+      can only be \(+1\) or \(-1\), and it lands on \(+1\) exactly for the squares. This is the test
+      the <a href="how-it-works.html#smooth">factor base</a> runs on every candidate prime: only those
+      with \(\left(\frac{\widetilde N}{p}\right) = +1\) can ever divide a sieve value, so only those are
+      kept.
+    </p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">Worked example — is 10 a square mod 13?</div>
+      <p>Apply Euler's criterion with \(n = 10\), \(p = 13\), so \((p-1)/2 = 6\):</p>
+      <pre><code>10^2 = 100 ≡ 9         (mod 13)
+10^3 = 10·9 = 90 ≡ 12 ≡ -1
+10^6 = (10^3)^2 ≡ (-1)^2 = 1   →  (10 | 13) = +1</code></pre>
+      <p>
+        So 10 is a quadratic residue, and indeed \(6^2 = 36 \equiv 10\) and \(7^2 = 49 \equiv 10\). By
+        contrast \(2^6 = 64 \equiv 12 \equiv -1\), so 2 is a <em>non</em>-residue mod 13 — a fact the
+        next algorithm will need.
+      </p>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2 id="tonelli-shanks"><span class="folio">§A2</span> Tonelli–Shanks: square roots mod&nbsp;p</h2>
+
+    <p>
+      Knowing that \(n\) <em>is</em> a square mod \(p\) is not the same as holding the root \(r\). The
+      factor base needs the actual roots — they are where each prime strikes the sieve — so we need an
+      algorithm that produces \(r\) with \(r^2 \equiv n \pmod p\).
+    </p>
+
+    <h3>The easy half of the problem</h3>
+    <p>
+      When \(p \equiv 3 \pmod 4\) there is a closed form. Take
+    </p>
+    $$ r \equiv n^{(p+1)/4} \pmod p. $$
+    <p>
+      Then \(r^2 = n^{(p+1)/2} = n \cdot n^{(p-1)/2} = n\cdot\left(\tfrac{n}{p}\right) = n\) because \(n\)
+      is a residue. One exponentiation, done.
+    </p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">Worked example — the easy case</div>
+      <pre><code>p = 7  (≡ 3 mod 4),  n = 2
+r = 2^((7+1)/4) = 2^2 = 4
+check: 4^2 = 16 ≡ 2 (mod 7)   ✓   (the other root is 7 − 4 = 3)</code></pre>
+    </div>
+
+    <h3>The hard half: p ≡ 1 (mod 4)</h3>
+    <p>
+      Here no such shortcut exists, and Tonelli–Shanks earns its keep. Write the even number \(p-1\) as
+    </p>
+    $$ p - 1 = Q \cdot 2^{S}, \qquad Q \text{ odd}. $$
+    <p>
+      The idea is to isolate the &ldquo;awkward&rdquo; part of the group. The value \(t = n^{Q}\) lies in
+      the cyclic 2-group of order \(2^{S-1}\); if we can drive \(t\) down to \(1\) by repeatedly squaring
+      and correcting with a known non-residue, the accumulated corrections turn a first guess
+      \(R = n^{(Q+1)/2}\) into a true root. Concretely:
+    </p>
+    <ol>
+      <li>Find any quadratic non-residue \(z\) (Euler's criterion makes this a quick trial). Set
+        \(c \equiv z^{Q}\), \(t \equiv n^{Q}\), \(R \equiv n^{(Q+1)/2}\), and \(M = S\).</li>
+      <li>If \(t \equiv 1\), then \(R\) is the answer. Otherwise find the least \(i\) with
+        \(0 < i < M\) and \(t^{2^{i}} \equiv 1\).</li>
+      <li>Let \(b \equiv c^{\,2^{\,M-i-1}}\). Update \(M \leftarrow i\), \(c \leftarrow b^2\),
+        \(t \leftarrow t\,b^2\), \(R \leftarrow R\,b\), and repeat step&nbsp;2.</li>
+    </ol>
+    <p>
+      Each pass strictly lowers \(M\), so the loop runs at most \(S\) times — very fast, since \(S\) is
+      the number of factors of two in \(p-1\).
+    </p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">Worked example — √10 mod 13</div>
+      <pre><code>n = 10,  p = 13.     p − 1 = 12 = 3 · 2^2   →  Q = 3,  S = 2
+non-residue z = 2    (we showed 2^6 ≡ −1 above)
+
+initialise
+  c = z^Q   = 2^3      = 8         (mod 13)
+  t = n^Q   = 10^3     ≡ 12
+  R = n^((Q+1)/2) = 10^2 ≡ 9
+  M = 2
+
+round 1:  t = 12 ≠ 1
+  least i with t^(2^i) ≡ 1 :  t^2 = 12^2 = 144 ≡ 1   →  i = 1
+  b = c^(2^(M−i−1)) = c^(2^0) = c = 8
+  M ← 1
+  c ← b^2      = 64 ≡ 12
+  t ← t·b^2    = 12·12 = 144 ≡ 1
+  R ← R·b      = 9·8 = 72 ≡ 7
+
+round 2:  t = 1   →  stop,  r = R = 7
+
+check: 7^2 = 49 ≡ 10 (mod 13)   ✓   (the other root is 13 − 7 = 6)</code></pre>
+    </div>
+
+    <p>
+      SIQS.NET runs exactly this for every factor-base prime, storing both roots \(\pm r\) in
+      <code>factor_base.txt</code>; the siever reads them to place each prime's two arithmetic
+      progressions. See <a href="how-it-works.html#smooth">§3 of the deep dive</a>.
+    </p>
+
+    <!-- ============================================================ -->
+    <h2 id="crt"><span class="folio">§A3</span> The Chinese Remainder Theorem</h2>
+
+    <p>
+      Suppose you know a number only through its remainders against several <em>coprime</em> moduli
+      \(m_1, m_2, \dots, m_k\). The <strong>Chinese Remainder Theorem</strong> (CRT) says those remainders
+      pin the number down uniquely modulo the product \(M = m_1 m_2 \cdots m_k\): the system
+    </p>
+    $$ x \equiv a_1 \pmod{m_1}, \quad \dots, \quad x \equiv a_k \pmod{m_k} $$
+    <p>has exactly one solution in \(\{0, 1, \dots, M-1\}\), and it is built explicitly as</p>
+    $$ x \equiv \sum_{i=1}^{k} a_i \, M_i \, \bigl(M_i^{-1} \bmod m_i\bigr) \pmod{M},
+       \qquad M_i = \frac{M}{m_i}. $$
+    <p>
+      Each term is designed to equal \(a_i\) modulo \(m_i\) and vanish modulo every other \(m_j\),
+      because \(m_j \mid M_i\) for \(j \ne i\).
+    </p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">Worked example — Sunzi's problem</div>
+      <pre><code>x ≡ 2 (mod 3),   x ≡ 3 (mod 5),   x ≡ 2 (mod 7)
+M = 3·5·7 = 105
+
+i=1:  M1 = 35,  35 ≡ 2 (mod 3),  2^-1 ≡ 2   →  term = 2·35·2 = 140
+i=2:  M2 = 21,  21 ≡ 1 (mod 5),  1^-1 ≡ 1   →  term = 3·21·1 =  63
+i=3:  M3 = 15,  15 ≡ 1 (mod 7),  1^-1 ≡ 1   →  term = 2·15·1 =  30
+
+x = 140 + 63 + 30 = 233 ≡ 23 (mod 105)
+check: 23 ≡ 2 (mod 3),  23 ≡ 3 (mod 5),  23 ≡ 2 (mod 7)   ✓</code></pre>
+    </div>
+
+    <p>
+      SIQS.NET uses CRT at the heart of <a href="how-it-works.html#siqs">self-initialization</a>. To build
+      a coefficient \(B\) with \(B^2 \equiv \widetilde N \pmod A\) where \(A = q_1 \cdots q_s\), it solves
+      the square-root condition modulo each prime \(q_i\) separately — each \(q_i\) already carries its
+      stored root — and CRT-combines the pieces. The basis terms \(B_i\) in §5 are precisely the CRT
+      terms above, arranged so that flipping a sign on one \(B_i\) still yields a valid \(B\).
+    </p>
+
+    <!-- ============================================================ -->
+    <h2 id="block-lanczos"><span class="folio">§A4</span> Block Lanczos over GF(2)</h2>
+
+    <p>
+      Filtering leaves a large, sparse 0/1 matrix \(M\) — for a 90-digit factorization, on the order of
+      \(10^5\) rows and columns, with only a few dozen ones per row. The task is to find a non-empty set
+      of rows that <strong>XOR to zero</strong>: a vector \(y\) (over \(\mathrm{GF}(2)\), the field
+      \(\{0,1\}\) with addition = XOR) such that \(y^{\mathsf T} M = 0\). Each such \(y\) is a
+      dependency, and each dependency is a shot at a congruence of squares.
+    </p>
+
+    <h3>Why not just eliminate?</h3>
+    <p>
+      Gaussian elimination finds dependencies, but it destroys sparsity: clearing a column adds one row
+      into many others, and the count of ones per row climbs until the matrix no longer fits in memory —
+      <em>fill-in</em>. On top of that, elimination costs \(O(n^3)\) bit operations. At \(n \approx 10^5\)
+      both problems are fatal.
+    </p>
+
+    <h3>The Lanczos idea</h3>
+    <p>
+      Lanczos-type methods never modify \(M\). They interrogate it only through
+      <strong>matrix–vector products</strong> \(v \mapsto Mv\) and \(v \mapsto M^{\mathsf T} v\) — each
+      one XOR per stored one, so each product costs \(O(w)\) where \(w\) is the total number of ones. The
+      symmetric matrix \(A = M^{\mathsf T} M\) is built only implicitly, and the method constructs a
+      sequence of mutually \(A\)-orthogonal vectors with a short recurrence, extracting the nullspace as
+      it goes. Sparsity is preserved forever, and the whole solve is \(O(n\cdot w)\).
+    </p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">The GF(2) obstruction</div>
+      <p>
+        Over the real numbers, classical Lanczos divides by inner products \(v^{\mathsf T} A v\), which are
+        safely nonzero for \(v \ne 0\). Over \(\mathrm{GF}(2)\) that fails: a nonzero vector can be
+        <em>self-orthogonal</em>, \(v^{\mathsf T} v = 0\) (e.g. \(v = (1,1)\) gives \(1 + 1 = 0\)). Divide
+        by that and the recurrence collapses.
+      </p>
+    </div>
+
+    <h3>Montgomery's block fix</h3>
+    <p>
+      Montgomery's <strong>Block Lanczos</strong> (1995) works with a <em>block</em> of \(N = 64\) vectors
+      at once instead of one. Two payoffs fall out:
+    </p>
+    <ul>
+      <li><strong>It dodges the isotropy problem.</strong> Where a single vector might be self-orthogonal,
+        a 64-dimensional block almost never is entirely degenerate. At each step the method inverts the
+        \(64\times 64\) inner-product matrix <em>only on the subspace where it is non-singular</em>, and
+        carries the degenerate directions forward to the next step — a bookkeeping trick that keeps the
+        recurrence alive.</li>
+      <li><strong>It is 64&times; faster, for free.</strong> A machine word holds 64 bits, so one hardware
+        <code>XOR</code> advances all 64 vectors of the block at once. The width of the word <em>is</em>
+        the block size. As a bonus, the run emits up to 64 independent nullspace vectors together.</li>
+    </ul>
+    <p>
+      The iteration converges after roughly \(n/64\) matrix passes. The matrix is never altered, memory
+      stays flat at the size of the input, and <code>dependencies.txt</code> collects the resulting
+      nullspace vectors — typically several dozen per run.
+    </p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">Worked example — a dependency you can XOR by hand</div>
+      <p>
+        A genuine block recurrence over \(10^5\) dimensions is not something to trace on paper, but the
+        <em>object</em> it produces is easy to see on a small matrix. Take six relations (rows) over five
+        primes (columns):
+      </p>
+      <pre><code>        p1 p2 p3 p4 p5
+  r1 [  1  0  1  0  0 ]
+  r2 [  0  1  1  0  1 ]
+  r3 [  1  1  0  0  1 ]
+  r4 [  0  0  1  0  0 ]
+  r5 [  1  0  0  1  0 ]
+  r6 [  0  1  0  1  1 ]
+
+dependency:  r1 ⊕ r2 ⊕ r3
+  10100 ⊕ 01101 = 11001
+  11001 ⊕ 11001 = 00000     →  every column even  ✓</code></pre>
+      <p>
+        So \(y = (1,1,1,0,0,0)\) satisfies \(y^{\mathsf T} M = 0\): rows 1, 2 and 3 together use every
+        prime an even number of times, and their product is a perfect square. On a matrix this small you
+        would just eliminate; Block Lanczos exists to find exactly this kind of \(y\) when the matrix is a
+        hundred thousand rows tall and elimination would never fit in memory. For the full recurrence, see
+        Montgomery, <em>A Block Lanczos Algorithm for Finding Dependencies over GF(2)</em> (EUROCRYPT&nbsp;1995).
+      </p>
+    </div>
+
+    <p>This is the phase the <a href="how-it-works.html#linalg">deep dive's §8</a> and its scrollytelling matrix scene depict.</p>
+
+    <!-- ============================================================ -->
+    <h2 id="gray"><span class="folio">§A5</span> The binary-reflected Gray code</h2>
+
+    <p>
+      A <strong>Gray code</strong> is an ordering of all \(2^{s}\) binary strings of length \(s\) in which
+      <em>consecutive strings differ in exactly one bit</em>. The standard one, the
+      <strong>binary-reflected</strong> Gray code, is built by reflection: take the list for \(s-1\) bits,
+      prepend \(0\) to each entry, then append the same list <em>reversed</em> with \(1\) prepended. It has
+      a one-line formula too — the \(k\)-th codeword is
+    </p>
+    $$ g(k) = k \oplus (k \gg 1), $$
+    <p>the bitwise XOR of \(k\) with itself shifted right by one.</p>
+
+    <div class="defbox reveal">
+      <div class="deftitle">Worked example — three bits</div>
+      <pre><code> k   g(k)=k⊕(k»1)   bit that flips to reach it
+ 0     000
+ 1     001              bit 0
+ 2     011              bit 1
+ 3     010              bit 0
+ 4     110              bit 2
+ 5     111              bit 0
+ 6     101              bit 1
+ 7     100              bit 0
+
+all eight strings appear once; each step flips a single bit.
+the flipped bit is the lowest set bit of the step number k:
+   1,2,3,4,5,6,7  →  0,1,0,2,0,1,0   (the "ruler" sequence)</code></pre>
+    </div>
+
+    <p>
+      In <a href="how-it-works.html#siqs">self-initialization</a>, SIQS.NET walks the \(2^{s-1}\) sign
+      patterns \(\varepsilon \in \{\pm1\}^{s}\) for the coefficient \(B\) in Gray-code order. Because
+      successive patterns differ in one position \(v\), stepping to the next polynomial changes \(B\) by a
+      single \(\pm 2B_v\), and every prime's sieve root moves by one <em>precomputed</em> constant
+      \(\Delta_{v,p}\) — one addition per prime instead of a fresh modular inverse. The Gray code is what
+      makes polynomial switching almost free, and thus what makes the sieve &ldquo;self-initializing.&rdquo;
+    </p>
+
+    <div class="article-nav">
+      <a href="how-it-works.html">&larr; Back to the deep dive</a>
+      <a href="https://github.com/JesHansen/siqs.net">Browse the source &rarr;</a>
+    </div>
+  </main>
+
+  <footer class="site">
+    <div class="wrap footer-inner">
+      <div>
+        <div class="brand"><span class="mark">√</span><span>SIQS<span class="dot">.NET</span></span></div>
+        <p class="footer-note">A quadratic sieve workbench, in modern C# and .NET. Happy sieving.</p>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/JesHansen/siqs.net">GitHub</a>
+        <a href="how-it-works.html">How it works</a>
+        <a href="appendix.html">Appendix</a>
+        <a href="index.html">Home</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/site.js" defer></script>
+</body>
+</html>
