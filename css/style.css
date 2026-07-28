@@ -322,6 +322,20 @@ footer.site {
 .tldr ol li:last-child { margin-bottom: 0; }
 .tldr pre { margin: 0.5rem 0 0; }
 .tldr p { margin: 0.3rem 0; }
+.tldr .hint { color: var(--text-dim); font-size: 0.9rem; margin-top: 0.5rem; }
+.tldr figure.term { margin: 0.6rem 0 0; }
+.tldr figure.term img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.tldr figure.term figcaption {
+  margin-top: 0.35rem;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
 
 /* ---------- Article (deep-dive) layout ---------- */
 .article {

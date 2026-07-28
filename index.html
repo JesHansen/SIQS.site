@@ -60,18 +60,26 @@ cd siqs.net
 dotnet build -c Release SIQS.slnx</code></pre>
           </li>
           <li>
-            <p>Point <code>qs</code> at the number you want factored:</p>
-            <pre><code>dotnet run -c Release --project QS/QS.csproj -- 150478035830330483870744795468187571781390056303346096534807</code></pre>
-            <p>You'll see live progress for each phase — factor base, sieving, filtering, linear
-              algebra, square root — and at the end the factorization:</p>
-            <pre><code>  [factor base]    size, multiplier, and bound
-  [sieving]        relations found / needed  (live)
-  [filtering]      matrix size before and after pruning
-  [linear algebra] null-space dependencies found
-  [square root]    dependency attempts
-
-&lt;N&gt; = &lt;factor1&gt; * &lt;factor2&gt;
-job workspace: runs/&lt;job-id&gt;</code></pre>
+            <p>The build produces a <code>qs</code> binary — point it straight at the number you
+              want factored (no need to <code>dotnet run</code> the project again):</p>
+            <pre><code>.\QS\bin\Release\net10.0\qs.exe 150478035830330483870744795468187571781390056303346096534807</code></pre>
+            <p class="hint">On Linux or macOS, run <code>./QS/bin/Release/net10.0/qs</code> (drop the
+              <code>.exe</code>).</p>
+            <p>A live terminal view tracks every phase — factor base, sieving, filtering, linear
+              algebra, square root — with a progress bar, elapsed time, and an estimate of the time
+              left for the long-running phases:</p>
+            <figure class="term">
+              <img src="img/qs-tui-live.png" width="1204" height="228" loading="lazy"
+                   alt="The qs terminal UI mid-run: factor base done, sieving at 53% with a live progress bar showing elapsed time, estimated time left, and relations found, and the remaining phases still pending." />
+            </figure>
+            <p>When it finishes, each phase collapses to a one-line summary above the factorization:</p>
+            <figure class="term">
+              <img src="img/qs-tui-result.png" width="1204" height="348" loading="lazy"
+                   alt="The qs terminal UI after completion: all five phases checked off with one-line summaries, the result N = p times q, and a dim job and artifacts footer." />
+            </figure>
+            <p class="hint">Want the raw numbers back? <code>--debug</code> restores the full per-phase
+              counter dump, and <code>--quiet</code> prints only the factor product to stdout so you
+              can pipe <code>qs</code> into a script.</p>
           </li>
           <li>
             <p>Prefer buttons over terminals? Start the web workbench and open
@@ -402,11 +410,12 @@ job workspace: runs/&lt;job-id&gt;</code></pre>
           Everything runs from a fresh clone with the .NET 10 SDK — no other dependencies.
         </p>
         <pre><code># Build and test everything
-dotnet build SIQS.slnx
+dotnet build -c Release SIQS.slnx
 dotnet test --solution SIQS.slnx
 
-# Factor from the command line (add --parallelism 1 for reproducible artifacts)
-dotnet run -c Release --project QS/QS.csproj -- &lt;your composite&gt;
+# Factor from the command line with the built binary
+# (add --parallelism 1 for reproducible artifacts)
+.\QS\bin\Release\net10.0\qs.exe &lt;your composite&gt;
 
 # Explore the full workbench in a browser
 dotnet run -c Release --project SIQS.UI/SIQS.UI.csproj --urls "http://localhost:5078"
