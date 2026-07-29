@@ -528,39 +528,65 @@ td code { color: var(--accent); }
   background: var(--paper-2);
 }
 
-/* Benchmark ladder — bars grow with time, drawn on scroll */
-.ladder { display: grid; gap: 0.55rem; margin-top: 0.5rem; }
-.rung {
-  display: grid;
-  grid-template-columns: 3.2rem minmax(0,1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  font-family: var(--mono);
-  font-size: 0.82rem;
+/* Benchmark line chart — inline SVG, log-scaled time axis, drawn on scroll */
+.benchfig { position: relative; margin: 2rem 0 0; }
+.benchplot { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.benchplot .grid { stroke: var(--rule); stroke-width: 1; }
+.benchplot .vgrid { stroke: var(--rule-soft); }
+.benchplot .ylab, .benchplot .xlab, .benchplot .axis-title {
+  fill: var(--ink-faint); font-family: var(--mono); font-size: 11px;
 }
-.rung .lbl { color: var(--ink); }
-.rung .split { color: var(--ink-faint); font-size: 0.74rem; }
-.rung .track {
-  position: relative;
-  height: 10px;
-  background: var(--paper-3);
-  border-radius: 999px;
-  overflow: hidden;
+.benchplot .ylab { text-anchor: end; }
+.benchplot .xlab { text-anchor: middle; }
+.benchplot .axis-title { fill: var(--ink-dim); letter-spacing: 0.03em; }
+.benchplot .bench-area { opacity: 0; transition: opacity 1.1s var(--ease) 0.45s; }
+.benchplot.in .bench-area { opacity: 1; }
+.benchplot .bench-line {
+  fill: none; stroke: url(#benchLine); stroke-width: 2;
+  stroke-linejoin: round; stroke-linecap: round;
 }
-.rung .fill {
-  position: absolute;
-  inset: 0 100% 0 0;
-  background: linear-gradient(90deg, var(--accent-deep), var(--accent));
-  border-radius: 999px;
-  transition: right 1.1s var(--ease);
+.benchplot .bench-dots circle { fill: var(--accent); opacity: 0.5; }
+.benchplot .peak-dot { fill: var(--accent-strong); stroke: var(--paper); stroke-width: 2; }
+.benchplot .peak-lab { fill: var(--accent); font-family: var(--mono); font-size: 11.5px; }
+.benchplot .bench-cursor { display: none; }
+.benchplot .bench-cursor.on { display: block; }
+.benchplot .cursor-line { stroke: var(--accent-line); stroke-width: 1; stroke-dasharray: 3 3; }
+.benchplot .cursor-dot { fill: var(--accent-strong); stroke: var(--paper); stroke-width: 2; }
+.benchplot .bench-hit { cursor: crosshair; pointer-events: all; }
+/* draw-on: line reveals left-to-right; --len set by js/benchmarks.js */
+.benchplot .bench-line { stroke-dashoffset: var(--len, 0); stroke-dasharray: var(--len, 0); }
+.benchplot.in .bench-line { transition: stroke-dashoffset 1.7s var(--ease); stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .benchplot .bench-area, .benchplot.in .bench-area { opacity: 1; transition: none; }
+  .benchplot .bench-line, .benchplot.in .bench-line { stroke-dashoffset: 0; transition: none; }
 }
-.rung.in .fill { right: var(--rest, 50%); }
-.rung .time { color: var(--ink); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.rung.peak .lbl, .rung.peak .time { color: var(--accent); }
-@media (max-width: 40rem) {
-  .rung { grid-template-columns: 2.6rem 1fr auto; }
-  .rung .split { display: none; }
+
+/* Tooltip (created by js/benchmarks.js) */
+.bench-tip {
+  position: absolute; z-index: 3; pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 8px;
+  padding: 0.35rem 0.55rem; font-family: var(--mono); font-size: 0.75rem;
+  color: var(--ink); white-space: nowrap; line-height: 1.2;
+  box-shadow: 0 6px 22px rgba(0,0,0,0.28); opacity: 0; transition: opacity 0.12s;
 }
+.bench-tip.on { opacity: 1; }
+.bench-tip .t-d { color: var(--accent); }
+.bench-tip .t-sep { color: var(--ink-faint); margin: 0 0.35em; }
+
+/* Collapsible full data table */
+.chart-data { margin-top: 1.4rem; font-size: 0.92rem; }
+.chart-data summary {
+  cursor: pointer; font-family: var(--mono); font-size: 0.8rem;
+  color: var(--ink-dim); padding: 0.3rem 0; width: max-content;
+}
+.chart-data summary:hover { color: var(--accent); }
+.chart-data[open] summary { margin-bottom: 0.6rem; }
+.bench-table { max-height: 340px; overflow: auto; }
+.bench-table table { font-family: var(--mono); font-size: 0.78rem; }
+.bench-table th, .bench-table td { padding: 0.34rem 0.9rem; }
+.bench-table td { font-variant-numeric: tabular-nums; }
+.bench-table td:nth-child(2), .bench-table td:nth-child(4) { color: var(--ink-dim); }
 
 /* ---------- Congruence callout ---------- */
 .congruence {
