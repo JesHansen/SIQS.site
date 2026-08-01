@@ -37,6 +37,7 @@
       <nav class="nav-links">
         <a class="hide-sm" href="#start">Start</a>
         <a class="hide-sm" href="#benchmarks">Benchmarks</a>
+        <a class="hide-md" href="#c115">C115</a>
         <a class="hide-sm" href="#pipeline">Pipeline</a>
         <a class="hide-sm" href="#workbench">Workbench</a>
         <a href="how-it-works.html">How&nbsp;it&nbsp;works</a>
@@ -63,7 +64,7 @@
             <p class="lede reveal d3">
               A factorization workbench <em>and</em> a readable implementation of the
               self-initializing quadratic sieve — routinely splitting 85–100&nbsp;digit composites
-              on ordinary hardware, with every phase visible and documented.
+              on ordinary hardware, crowned by a distributed C115 split across 720 sieve cores.
             </p>
             <div class="cta-row reveal d4">
               <a class="btn btn-primary" href="#start">Get started <span class="arrow">→</span></a>
@@ -279,6 +280,67 @@ dotnet build -c Release SIQS.slnx</code></pre>
             </table>
           </div>
         </details>
+      </div>
+    </section>
+
+    <!-- ============================ C115 record ============================ -->
+    <section id="c115" class="chapter record-chapter" aria-label="C115 factorization showcase">
+      <div class="wrap">
+        <div class="record-stage reveal">
+          <div class="record-top">
+            <div class="record-mark" aria-hidden="true">
+              <span class="record-c">C</span>
+              <span class="record-digits">115</span>
+              <span class="record-rule"></span>
+              <span class="record-date">01 · 08 · 2026</span>
+            </div>
+
+            <div class="record-copy">
+              <span class="kicker">The crown jewel</span>
+              <h2>Fifteen machines.<br />Seven hundred twenty cores.<br /><em>One split.</em></h2>
+              <p class="record-lede">A balanced 115-digit semiprime, factored end to end by SIQS.NET
+                with default parameters. Fifteen 48-core DigitalOcean droplets sieved in parallel;
+                one coordinator verified 6.66 million relations, built the matrix, solved it, and
+                recovered the factors.</p>
+            </div>
+          </div>
+
+          <div class="record-metrics" aria-label="C115 factorization highlights">
+            <div class="record-metric"><strong>41:21</strong><span>submit to factors</span></div>
+            <div class="record-metric"><strong>15 × 48</strong><span>droplets × sieve cores</span></div>
+            <div class="record-metric"><strong>21:58</strong><span>distributed sieving</span></div>
+            <div class="record-metric"><strong>1.43M</strong><span>matrix rows</span></div>
+          </div>
+
+          <div class="record-balance" aria-label="Timed work split between distributed sieving and the central finishing phases">
+            <div class="record-balance-head">
+              <span>Timed work</span>
+              <span>40:27 total</span>
+            </div>
+            <div class="record-bar">
+              <div class="record-bar-sieve"><span>Distributed sieve · 54.3%</span></div>
+              <div class="record-bar-central"><span>Coordinator phases · 45.7%</span></div>
+            </div>
+          </div>
+
+          <div class="record-equation">
+            <span class="record-equation-label">The split</span>
+            <code class="record-n">1634609642529461351426322818336738394876177998696139518394622790139101259986895310200063458405600316582957220469623</code>
+            <span class="record-equals">=</span>
+            <div class="record-factors">
+              <code>1237988317263640195375154562113020204374599620934815747079</code>
+              <span>×</span>
+              <code>1320375660848306094500628943570772166023517472818828376337</code>
+            </div>
+          </div>
+
+          <div class="record-foot">
+            <p><strong>Pure SIQS, all the way through.</strong> The sieve streamed 5.10&nbsp;GB in 1,638
+              durable chunks with no failed chunks. Filtering produced a 1,433,382 × 1,428,982
+              sparse matrix; Block Lanczos emitted 62 dependencies in one run, and the second yielded
+              the factors. The complete run is preserved as job <code>D20260801-105654-1036</code>.</p>
+          </div>
+        </div>
       </div>
     </section>
 
